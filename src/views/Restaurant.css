@@ -1,0 +1,212 @@
+.restaurant-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.restaurant-bg {
+  flex: 1;
+  background-image: url('/assets/bg_restaurant.jpg');
+  background-size: cover;
+  background-position: center bottom;
+  border-radius: 24px;
+  border: 4px solid #f1c40f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.customer-area, .holding-dish, .combo-counter, .fever-overlay, .restaurant-actions {
+  z-index: 2;
+}
+
+.fever-mode .restaurant-bg {
+  animation: feverPulse 1s infinite alternate;
+}
+
+@keyframes feverPulse {
+  0% { filter: brightness(1) sepia(0); }
+  100% { filter: brightness(1.2) sepia(0.3) hue-rotate(-10deg); }
+}
+
+.fever-overlay {
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 900;
+  color: #ff7675;
+  text-shadow: 2px 2px 0 #ffeaa7;
+  z-index: 5;
+  animation: bounce 0.5s infinite alternate;
+}
+
+.combo-counter {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #0984e3;
+  text-shadow: 2px 2px 0 #fff;
+  z-index: 5;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hint-text {
+  font-size: 11px;
+  color: #74b9ff;
+  font-weight: bold;
+  margin-top: 5px;
+  background: #f1f2f6;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.customer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.customer-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s;
+}
+
+.character-img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  mix-blend-mode: multiply; /* Removes white background cleanly */
+}
+
+.character-emoji {
+  font-size: 100px;
+  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+}
+
+.customer-avatar.happy {
+  animation: jump 0.5s infinite alternate;
+}
+
+@keyframes jump {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-20px); }
+}
+
+.bubble {
+  background: white;
+  padding: 15px 25px;
+  border-radius: 30px;
+  border: 4px solid #fff;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  position: relative;
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 15px 15px 0;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
+  display: block;
+  width: 0;
+}
+
+.order-bubble img {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  mix-blend-mode: multiply;
+}
+
+.order-text {
+  font-size: 18px;
+  font-weight: 900;
+  color: #e15f41;
+}
+
+.happy-bubble {
+  border-color: #ffb8b8;
+  color: #d63031;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+}
+
+.holding-dish {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 20px;
+  border: 3px solid #74b9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.holding-dish img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+}
+
+.holding-text {
+  font-size: 10px;
+  font-weight: 900;
+  color: #0984e3;
+  margin-bottom: 5px;
+}
+
+.restaurant-actions {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.btn-go-kitchen, .btn-serve {
+  width: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+
+.btn-go-kitchen {
+  background: #ffb3ba;
+  color: white;
+}
+
+.btn-serve {
+  background: #55efc4;
+  color: #00b894;
+}
+
+.btn-go-kitchen:active, .btn-serve:active {
+  transform: translateY(5px);
+  box-shadow: 0 0 0 transparent;
+}
