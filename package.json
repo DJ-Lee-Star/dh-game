@@ -3,12 +3,19 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": { "node": ">=24" },
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"npm:server\" \"npm:vite\"",
+    "vite": "vite --host 127.0.0.1",
+    "server": "tsx server/index.ts",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "concurrently -k \"npm:server\" \"npm:vite-preview\"",
+    "vite-preview": "vite preview --host 127.0.0.1",
+    "start": "tsx server/index.ts",
+    "db:backup": "tsx server/backup.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",
@@ -16,11 +23,14 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
     "oxlint": "^1.81.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.2"
