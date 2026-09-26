@@ -4,9 +4,11 @@
 
 ## 결과와 범위
 
-`NEXT_REVISION_NOTES.md`의 M·C·R·G·D·P·F·K·A 기능을 로컬 웹게임에 연결했다. 구현 코드는 `src/v2/`, SQLite 서버는 `server/`, 브라우저 시나리오는 `e2e/`에 있다. 실제 어린이의 재미 평가와 물리 휴대전화의 조작·음색 평가는 수행하지 않았다. 이 두 항목은 아래 제한에 구분해 적었다.
+`NEXT_REVISION_NOTES.md`의 M·C·R·G·D·P·F·K·A 기능을 로컬 웹게임에 연결했다. 구현 코드는 `src/v2/`, SQLite 서버는 `server/`, 브라우저 시나리오는 `e2e/`에 있다. 기존 v1 미리보기와 같은 `127.0.0.1:4173`에서 v2를 실행해 브라우저 저장 기록의 출처를 보존했다. 실제 어린이의 재미 평가와 물리 휴대전화의 조작·음색 평가는 수행하지 않았다. 이 두 항목은 아래 제한에 구분해 적었다.
 
 v1의 미커밋 작업은 `28905b0 snapshot: preserve playable v1 and v2 plans` 커밋으로 보존한 뒤 별도 브랜치에서 시작했다. 변경 전 v1 기준선은 테스트 15건, lint, build 통과였다. 실제 플레이 기록 `data/nyanyang.sqlite`는 테스트 전에 초기화하지 않았다. API 통합 테스트는 임시 DB, E2E는 `data/e2e.sqlite`를 썼다.
+
+최종 실행 전 SQLite를 `data/pre-port-switch.sqlite`에 추가 백업했다. 기존 4173 Vite 미리보기 프로세스를 종료하고 v2 서버를 같은 주소에 시작한 뒤 `/api/health`, 첫 화면, 새 의상 이미지의 정상 응답을 확인했다. 기존 브라우저 `localStorage`는 삭제하거나 수정하지 않았다.
 
 ## 계획 0~6단계 통과 기록
 
@@ -72,7 +74,7 @@ v1의 미커밋 작업은 `28905b0 snapshot: preserve playable v1 and v2 plans` 
 | `npm run lint` | 통과. |
 | `npm run build` | TypeScript 검사와 Vite 프로덕션 빌드 통과. |
 | `npm run test:e2e` | Chromium 브라우저 9개 시나리오 통과. |
-| 프로덕션 서버 점검 | `npm run build` 후 `PORT=4188`, 별도 `NYANG_DB_PATH`로 `npm run start` 실행. `/api/health`, `/`, 가족 이미지가 각각 정상 응답했고 새 프로필 350코인을 읽었다. |
+| 프로덕션 서버 점검 | `npm run build` 후 `PORT=4188`, 별도 `NYANG_DB_PATH`로 `npm run start` 실행. `/api/health`, `/`, 가족 이미지가 각각 정상 응답했고 새 프로필 350코인을 읽었다. 기본 포트는 v1 기록을 읽을 수 있도록 4173으로 설정했다. |
 
 브라우저에서는 신규 시작과 Lv.2, 정상 서빙·식사, 오주문 손님 서빙 금지와 가족 경로, 조리 취소와 재시도, 0개 재료, 14종 전부 조리, 비밀 요리와 별님, 이야기 스티커, 미니게임 참가비·완료 보상·새로고침 이어 하기, 꾸미기 구매·장착·복원, 두 프로필 분리와 현재 프로필만 초기화, 구매 응답 손실 뒤 동일 요청 재시도, BGM 전환·음량·음소거를 실행했다. API 테스트는 서버 재시작 뒤 복원, 구매·조리·서빙의 요청 ID 중복, 깨진 이전 저장 거부, SQLite 백업의 무결성 검사와 복원본 서버 실행을 확인했다.
 
