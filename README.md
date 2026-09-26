@@ -1,32 +1,50 @@
-# React + TypeScript + Vite
+# 냥냥식당
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+7~11세가 시간 제한 없이 즐기는 모바일 웹 요리 게임입니다. 고양이 셰프가 주문을 받고, 마트에서 재료를 산 뒤 단계별로 조리해 서빙합니다. Lv.1~5와 첫 시즌 완료까지 플레이할 수 있으며, 완료 후에도 주문이 계속 이어집니다.
 
-Currently, two official plugins are available:
+## 실행
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Node.js 20.19 이상이 필요합니다.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Vite가 표시하는 로컬 주소를 브라우저에서 엽니다. 배포용 파일은 `npm run build`로 `dist/`에 생성합니다. `npm run preview`로 빌드 결과를 미리 볼 수 있습니다.
+
+## 플레이 방법
+
+1. 식당에서 손님의 주문을 봅니다.
+2. 주방에서 주문 요리를 선택합니다. 잠긴 요리는 해당 레벨에 도달하면 열립니다.
+3. 재료 선반에서 안내 순서대로 재료를 누르고 조리 버튼을 탭하거나 드래그합니다. 팬케이크는 반죽과 굽기 두 단계입니다.
+4. 완성한 요리를 손님에게 서빙합니다. 올바른 주문은 코인·경험치·하트를 줍니다. 다른 요리는 가족에게 대접하고 원래 주문을 유지합니다.
+5. 재료가 부족하면 마트에서 구매합니다. 조리를 취소하거나 다시 시작해도 완성 전에는 재료가 소모되지 않습니다.
+
+일반 주문을 네 번 성공하면 스페셜 손님 별님 판다가 찾아옵니다. 현재 배운 요리 중 가장 높은 레벨의 음식을 부탁하며, 성공하면 코인과 경험치가 2배, 하트는 2개 추가됩니다. 다른 음식을 서빙해도 별님은 기다립니다.
+
+달걀 프라이에 소금을 더하면 비밀 레시피가 열립니다. 하루 두 요리와 두 번의 정상 서빙을 달성하면 퀘스트 보상을 각각 한 번 받을 수 있습니다. 하트 다섯 개로 중복 없는 꾸미기 선물을 열고 셰프에게 장착할 수 있습니다.
+
+진행 상황은 현재 브라우저의 `localStorage`에 자동 저장됩니다. 저장 키는 `nyanyang-restaurant-v2`이며, 같은 브라우저에서 새로고침해도 코인, 경험치, 재료, 일반·스페셜 주문, 발견한 요리, 꾸미기, 일일 퀘스트가 복원됩니다. 브라우저 데이터를 지우거나 다른 기기에서 열면 새 게임으로 시작합니다.
+
+화면 오른쪽 위 **설정**에서 이 브라우저의 플레이 기록을 초기화할 수 있습니다. 확인 단계를 거치면 진행 상태가 새 게임으로 돌아갑니다. 사용자별 DB 저장은 [다음 개편 요구사항](docs/NEXT_REVISION_NOTES.md)에 기록되어 있습니다.
+
+## 검증
+
+```powershell
+npm test
+npm run lint
+npm run build
+```
+
+실제로 실행한 브라우저 시나리오와 범위는 [QA 보고서](docs/QA_REPORT.md)에 기록했습니다.
+
+## 구성
+
+- `src/game/data.ts`: 레벨, 재료, 손님, 레시피와 보상 수치
+- `src/game/engine.ts`: 구매·조리·서빙·성장·퀘스트·꾸미기·저장 상태
+- `src/App.tsx`: 식당, 주방, 마트, 도감과 모달
+- `src/components/GameArt.tsx`: 음식·재료·장식 벡터 그림과 조리 도구 표시
+- `public/game/`: 생성한 캐릭터·표정·배경·조리 도구 WebP 에셋
+
+이미지는 이미지 생성 도구로 만들고 WebP로 변환했습니다. 조리 동작, 표정 전환과 움직임은 CSS 및 포인터 입력으로 구현했습니다. 사용한 이미지 프롬프트와 에셋 내역은 [아트 기록](docs/ART_ASSETS.md)에 있습니다.
