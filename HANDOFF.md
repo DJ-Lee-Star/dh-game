@@ -43,6 +43,8 @@ npm run test:e2e
 
 `main` 푸시의 자동 배포는 [GitHub Actions 워크플로](.github/workflows/deploy.yml)와 [배포 안내](deploy/README.md)에 있다. 서버 초기 설정은 `deploy/server-setup.sh`, 새 릴리스 활성화와 실패 시 복원은 `deploy/activate.sh`가 맡는다. 공개 주소는 <https://leedada.duckdns.org/>이며, 서버의 프로필 DB는 릴리스와 별도인 `/var/lib/dh-game/nyanyang.sqlite`에 둔다. 배포 상태는 Actions 실행 결과와 공개 주소의 `/api/health`로 확인한다.
 
+2026-09-27 첫 `main` 푸시로 자동 배포가 성공했다. Node 24.21.0과 Caddy에서 게임 서비스가 실행 중이며, HTTPS 첫 화면·가족 이미지·API 상태와 390px 모바일 브라우저 렌더링을 확인했다. 기존 같은 서버의 `wc-chatbot` 사이트도 HTTP 200으로 유지됐다.
+
 ## 남은 현장 확인
 
 실제 7~11세 어린이의 재미·난도·반복 피로도와 실제 iOS/Android 기기의 터치·음색·발열은 이 PC의 Chromium 검증만으로 판정하지 않는다. 현장 결과가 생기면 새 QA 보고서에 기록하고 조리 길이·음향을 조정한다.
