@@ -20,10 +20,11 @@ export function CookScene({ action, progress, ingredient, recipeId }: { action: 
   const sprite = cookingFood(recipeId);
   const cocoaMix = action === 'stir' ? progress / 100 : 0;
   const cocoaColor = `rgb(${Math.round(249 - 97 * cocoaMix)},${Math.round(238 - 142 * cocoaMix)},${Math.round(224 - 156 * cocoaMix)})`;
-  const showFood = recipeId !== 'cocoa_milk' && (['heat', 'flip', 'sprinkle', 'spread', 'stack'].includes(action) || (action === 'crack' && progress > 0));
+  const showFood = recipeId !== 'cocoa_milk' && recipeId !== 'fruit_skewers' && (['heat', 'flip', 'sprinkle', 'spread', 'stack'].includes(action) || (action === 'crack' && progress > 0));
   return <div className={`cook-scene-art scene-${action} recipe-${recipeId}`} aria-hidden="true">
     <img className="cook-station" src={`/game/station-${STATION[action]}-v3.webp`} alt="" draggable={false}/>
     {showFood && <img className="cook-scene-food" src={`/game/cook-${sprite}-v3.webp`} alt="" draggable={false} style={{ rotate: action === 'flip' ? `${progress * 1.2}deg` : undefined, marginTop: action === 'flip' ? `${-progress / 5}px` : undefined }}/>}
+    {recipeId === 'fruit_skewers' && action === 'stack' && <img className="cook-scene-food skewer-scene-food" src="/game/food-fruit-skewers-v3.png" alt="" draggable={false} style={{ opacity: Math.max(.15, progress / 100), scale: `${.7 + progress * .003}` }}/>}
     {recipeId === 'fried_egg' && action === 'crack' && <div className="egg-white-change" style={{ opacity: progress / 100, scale: `${0.55 + progress / 220}` }}><i/></div>}
     {recipeId === 'fried_egg' && action === 'heat' && <div className="egg-cooked-edge" style={{ opacity: progress / 100 }}/>}
     {recipeId === 'jam_toast' && action === 'spread' && <div className="toast-jam-change" style={{ width: `${progress * .72}%`, opacity: progress ? 1 : 0 }}/>}

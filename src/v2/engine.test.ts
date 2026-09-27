@@ -30,12 +30,13 @@ describe('냥냥식당 v2 콘텐츠와 성장', () => {
     expect(cooked.inventory.egg).toBe(2);
     expect(() => cook(cooked, 'fried_egg')).toThrow('먼저 서빙');
   });
-  it('counts ingredients used in multiple stages and in plating exactly once per use', () => {
+  it('carries a washed ingredient into slicing and charges one extra fruit only for decoration', () => {
     const state = stocked({ ...initialGame(), xp: 780 });
     const before = state.inventory.strawberry;
     const result = applyCommand(state, { type: 'COOK', recipeId: 'strawberry_smoothie', topping: 'strawberry', shape: 'star' }, now);
-    expect(result.state.inventory.strawberry).toBe(before - 3);
-    expect(recipeIngredients('strawberry_smoothie').filter(id => id === 'strawberry')).toHaveLength(2);
+    expect(result.state.inventory.strawberry).toBe(before - 2);
+    expect(recipeIngredients('strawberry_smoothie').filter(id => id === 'strawberry')).toHaveLength(1);
+    expect(recipeIngredients('tomato_egg').filter(id => id === 'tomato')).toHaveLength(1);
   });
   it('keeps up to three placed decorations through a save and charges for each edible topping', () => {
     const state = stocked({ ...initialGame(), xp: 780 });
@@ -74,6 +75,7 @@ describe('경제·가족·보상', () => {
     }
     state = applyCommand(state, { type: 'START_MINIGAME' }, now).state;
     state = applyCommand(state, { type: 'ABANDON_MINIGAME' }, now).state;
+    state = applyCommand(state, { type: 'BUY_CART', items: { jam: 1, cocoa: 1 } }, now).state;
     expect(state.money).toBe(0);
     expect(canRecoverIngredient(state, '2026-09-27')).toBe(true);
     const savedXp = state.xp, savedOwned = state.owned;
@@ -198,12 +200,26 @@ describe('접시 앨범·가족 이야기·선택 목표', () => {
     expect(state.stories).toContain(1);
     expect(state.familyVisits.father).toBe(3);
     expect(state.familyMemories).toContain('father');
+    expect(state.familyRequestsDone).toContain('father');
+  });
+  it('rewards a matching family request once and records the room prop', () => {
+    const start = stocked(initialGame());
+    const made = applyCommand(start, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'heart', decorations: [{ kind: 'shape', id: 'heart', x: 55, y: 35 }] }, now).state;
+    const first = applyCommand(made, { type: 'SERVE', target: 'father' }, now);
+    expect(first.outcome.message).toContain('가족 부탁 완성');
+    expect(first.state.familyRequestsDone).toEqual(['father']);
+    const secondDish = cook(first.state, 'fried_egg');
+    const second = applyCommand(secondDish, { type: 'SERVE', target: 'father' }, now);
+    expect(second.outcome.message).not.toContain('가족 부탁 완성');
+    expect(second.state.familyRequestsDone).toEqual(['father']);
+    expect(first.outcome.reward?.money).toBe((second.outcome.reward?.money ?? 0) + 80);
   });
   it('unlocks optional Lv.5 goals, claims once, and restores old saves with new defaults', () => {
     const oldSave = initialGame();
-    const restored = restoreState({ ...oldSave, album: undefined, familyVisits: undefined, storyProgress: undefined, selectedGoal: undefined, completedGoals: undefined });
+    const restored = restoreState({ ...oldSave, album: undefined, familyVisits: undefined, familyRequestsDone: undefined, storyProgress: undefined, selectedGoal: undefined, completedGoals: undefined });
     expect(restored.album).toEqual([]);
     expect(restored.familyVisits.father).toBe(0);
+    expect(restored.familyRequestsDone).toEqual([]);
     const levelFive = stocked({ ...initialGame(), xp: 1300, discovered: [...RECIPE_IDS.slice(0, 8)] });
     expect(() => applyCommand(initialGame(), { type: 'SELECT_GOAL', id: 'discover_8' }, now)).toThrow('Lv.5');
     const selected = applyCommand(levelFive, { type: 'SELECT_GOAL', id: 'discover_8' }, now).state;

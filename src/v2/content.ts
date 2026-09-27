@@ -30,7 +30,7 @@ export const MART_ITEMS = (Object.keys(INGREDIENTS) as IngredientId[]).filter(id
 
 export type CookAction = 'crack' | 'heat' | 'spread' | 'pour' | 'wash' | 'slice' | 'stir' | 'flip' | 'sprinkle' | 'stack';
 export interface Stage { action: CookAction; ingredients: IngredientId[]; instruction: string; visual: string }
-export interface Recipe { name: string; level: number; xp: number; reward: number; sweet: boolean; secret?: boolean; hint?: string; stages: Stage[] }
+export interface Recipe { name: string; level: number; xp: number; reward: number; sweet: boolean; secret?: boolean; hint?: string; stages: Stage[]; consumes?: Partial<Record<IngredientId, number>> }
 
 export const RECIPES = {
   fried_egg: { name: '노릇 달걀 프라이', level: 1, xp: 120, reward: 155, sweet: false, stages: [
@@ -49,7 +49,7 @@ export const RECIPES = {
     { action: 'slice', ingredients: ['banana'], instruction: '바나나를 조심조심 썰어요', visual: '동글동글 바나나 조각이 생겨요' },
     { action: 'spread', ingredients: ['bread', 'jam'], instruction: '구운 빵에 잼을 펴 발라요', visual: '잼 위로 바나나가 올라가요' },
   ] },
-  tomato_egg: { name: '토마토 달걀 컵', level: 2, xp: 150, reward: 240, sweet: false, stages: [
+  tomato_egg: { name: '토마토 달걀 컵', level: 2, xp: 150, reward: 240, sweet: false, consumes: { tomato: 1, egg: 1 }, stages: [
     { action: 'wash', ingredients: ['tomato'], instruction: '토마토를 물에 씻어요', visual: '반짝반짝 깨끗해져요' },
     { action: 'slice', ingredients: ['tomato'], instruction: '토마토를 작게 썰어요', visual: '빨간 토마토 조각이 쏙쏙' },
     { action: 'crack', ingredients: ['egg'], instruction: '달걀을 톡 넣어 익혀요', visual: '달걀과 토마토가 어울려요' },
@@ -72,10 +72,15 @@ export const RECIPES = {
     { action: 'stir', ingredients: ['flour', 'milk', 'egg'], instruction: '거품기로 반죽을 둥글게 저어요', visual: '가루가 폭신한 반죽이 돼요' },
     { action: 'flip', ingredients: ['oil'], instruction: '팬케이크를 들어 뒤집어요', visual: '양면이 황금빛으로 구워져요' },
   ] },
-  strawberry_smoothie: { name: '딸기 스무디', level: 4, xp: 220, reward: 270, sweet: true, stages: [
+  strawberry_smoothie: { name: '딸기 스무디', level: 4, xp: 220, reward: 270, sweet: true, consumes: { strawberry: 1, milk: 1 }, stages: [
     { action: 'wash', ingredients: ['strawberry'], instruction: '딸기를 깨끗이 씻어요', visual: '딸기가 반짝여요' },
     { action: 'slice', ingredients: ['strawberry'], instruction: '딸기를 반으로 잘라요', visual: '빨간 딸기 단면이 보여요' },
     { action: 'stir', ingredients: ['milk'], instruction: '우유와 함께 섞어요', visual: '분홍 스무디가 완성돼요' },
+  ] },
+  fruit_skewers: { name: '딸기 바나나 꼬치', level: 4, xp: 220, reward: 275, sweet: true, stages: [
+    { action: 'wash', ingredients: ['strawberry'], instruction: '딸기를 깨끗하게 씻어요', visual: '빨간 딸기가 반짝여요' },
+    { action: 'slice', ingredients: ['banana'], instruction: '바나나를 동글동글 썰어요', visual: '노란 바나나 조각이 생겨요' },
+    { action: 'stack', ingredients: [], instruction: '딸기와 바나나를 꼬치에 번갈아 꽂아요', visual: '과일 꼬치 세 개가 완성돼요' },
   ] },
   berry_pancake: { name: '비밀 별딸기 팬케이크', level: 4, xp: 240, reward: 420, sweet: true, secret: true, hint: '팬케이크에 딸기를 올리면?', stages: [
     { action: 'stir', ingredients: ['flour', 'milk', 'egg'], instruction: '반죽을 동그랗게 저어요', visual: '폭신한 반죽이 생겨요' },
@@ -106,7 +111,12 @@ export const levelFromXp = (xp: number) => {
   for (let i = LEVEL_XP.length - 1; i >= 0; i--) if (xp >= LEVEL_XP[i]) return i + 1;
   return 1;
 };
-export const recipeIngredients = (id: RecipeId) => RECIPES[id].stages.flatMap(stage => stage.ingredients).filter(item => INGREDIENTS[item].price > 0);
+export const recipeIngredients = (id: RecipeId): IngredientId[] => {
+  const recipe: Recipe = RECIPES[id];
+  if (recipe.consumes) return Object.entries(recipe.consumes).flatMap(([ingredient, count]) =>
+    Array.from({ length: count ?? 0 }, () => ingredient as IngredientId));
+  return recipe.stages.flatMap(stage => stage.ingredients).filter(item => INGREDIENTS[item].price > 0);
+};
 export const recipeCost = (id: RecipeId) => recipeIngredients(id).reduce((sum, item) => sum + INGREDIENTS[item].price, 0);
 
 export const CUSTOMERS = { dog: '몽실이', rabbit: '보송이', fox: '루루', bear: '곰 아저씨', panda: '별님' } as const;
@@ -118,6 +128,11 @@ export const FAMILY_FAVORITES: Record<FamilyId, RecipeId[]> = {
   father: ['fried_egg', 'tomato_egg', 'cozy_noodle', 'cheese_toast'],
   sibling: ['cocoa_milk', 'banana_toast', 'pancake', 'berry_pancake'],
 };
+export const FAMILY_REQUESTS = {
+  mother: { recipeId: 'jam_toast', shape: 'star', title: '별빛 잼 토스트', prop: '🌷' },
+  father: { recipeId: 'fried_egg', shape: 'heart', title: '마음 담은 프라이', prop: '☕' },
+  sibling: { recipeId: 'cocoa_milk', shape: 'smile', title: '웃는 코코아', prop: '🧸' },
+} satisfies Record<FamilyId, { recipeId: RecipeId; shape: 'heart' | 'star' | 'smile'; title: string; prop: string }>;
 
 export const STORIES = [
   { title: '비 오는 날의 따뜻한 간식', intro: '몽실이와 친구들이 비를 피해 식당에 왔어요. 따뜻한 음식으로 마음을 녹여 주세요.', ending: '창밖의 비가 그치고 친구들이 환하게 웃어요!', sticker: '☂️ 무지개 우산' },

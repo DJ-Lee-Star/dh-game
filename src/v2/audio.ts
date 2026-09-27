@@ -1,10 +1,11 @@
 export interface AudioSettings { music: boolean; musicVolume: number; effects: boolean; effectsVolume: number }
 const KEY = 'nyang-v2-audio';
 const defaults: AudioSettings = { music: true, musicVolume: 36, effects: true, effectsVolume: 42 };
-type Scene = 'restaurant' | 'mart';
+type Scene = 'restaurant' | 'mart' | 'kitchen' | 'minigame' | 'wardrobe';
+type FallbackScene = 'restaurant' | 'mart';
 type Effect = 'tap' | 'slice' | 'stir' | 'catch' | 'cook' | 'serve' | 'reward' | 'error' | 'countdown';
 const notes: Record<string, number> = { C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196, A3: 220, B3: 246.94, C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99 };
-const tunes: Record<Scene, (keyof typeof notes | null)[]> = {
+const tunes: Record<FallbackScene, (keyof typeof notes | null)[]> = {
   restaurant: ['E4', null, 'G4', 'A4', 'G4', null, 'E4', null, 'D4', null, 'E4', 'G4', 'E4', null, 'C4', null,
     'E4', null, 'G4', 'C5', 'B4', null, 'A4', null, 'G4', 'E4', 'D4', null, 'C4', null, null, null,
     'F4', null, 'A4', 'C5', 'A4', null, 'G4', null, 'E4', 'G4', 'A4', null, 'G4', null, 'E4', null,
@@ -14,7 +15,7 @@ const tunes: Record<Scene, (keyof typeof notes | null)[]> = {
     'A4', 'C5', 'E5', 'G5', 'E5', 'C5', 'A4', null, 'B4', 'D5', 'G5', 'D5', 'B4', 'G4', 'E4', null,
     'G4', 'B4', 'D5', 'E5', 'D5', 'B4', 'A4', 'G4', 'C5', 'A4', 'G4', 'E4', 'D4', null, null, null],
 };
-const bass: Record<Scene, (keyof typeof notes)[]> = {
+const bass: Record<FallbackScene, (keyof typeof notes)[]> = {
   restaurant: ['C3', 'A3', 'F3', 'G3', 'C3', 'A3', 'F3', 'G3'],
   mart: ['G3', 'C3', 'D3', 'G3', 'A3', 'E3', 'G3', 'C3'],
 };
@@ -92,15 +93,16 @@ class GameAudio {
     this.fallbackBus = fallbackBus;
     this.nextNote = 0;
     this.nextAt = this.ctx.currentTime + .06;
-    const beat = scene === 'restaurant' ? .37 : .3;
+    const fallback: FallbackScene = scene === 'mart' || scene === 'minigame' ? 'mart' : 'restaurant';
+    const beat = fallback === 'restaurant' ? .37 : .3;
     const schedule = () => {
       if (!this.ctx || this.activeScene !== scene) return;
       while (this.nextAt < this.ctx.currentTime + .8) {
-        const key = tunes[scene][this.nextNote % tunes[scene].length];
-        if (key) this.pluck(notes[key], this.nextAt, beat * .73, fallbackBus, scene === 'mart' ? 'triangle' : 'sine', .78);
-        if (this.nextNote % 8 === 0) this.pluck(notes[bass[scene][Math.floor(this.nextNote / 8) % 8]], this.nextAt, beat * 3.3, fallbackBus, 'sine', .43);
-        if (this.nextNote % 8 === 4) this.pluck(notes[bass[scene][Math.floor(this.nextNote / 8) % 8]] * 1.5, this.nextAt, beat * 1.8, fallbackBus, 'triangle', .22);
-        if (scene === 'mart' && this.nextNote % 2 === 1) this.pluck(notes.C5 * 2, this.nextAt, beat * .13, fallbackBus, 'sine', .12);
+        const key = tunes[fallback][this.nextNote % tunes[fallback].length];
+        if (key) this.pluck(notes[key], this.nextAt, beat * .73, fallbackBus, fallback === 'mart' ? 'triangle' : 'sine', .78);
+        if (this.nextNote % 8 === 0) this.pluck(notes[bass[fallback][Math.floor(this.nextNote / 8) % 8]], this.nextAt, beat * 3.3, fallbackBus, 'sine', .43);
+        if (this.nextNote % 8 === 4) this.pluck(notes[bass[fallback][Math.floor(this.nextNote / 8) % 8]] * 1.5, this.nextAt, beat * 1.8, fallbackBus, 'triangle', .22);
+        if (fallback === 'mart' && this.nextNote % 2 === 1) this.pluck(notes.C5 * 2, this.nextAt, beat * .13, fallbackBus, 'sine', .12);
         this.nextNote += 1; this.nextAt += beat;
       }
     };

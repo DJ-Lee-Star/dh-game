@@ -1,4 +1,4 @@
-import { COSMETICS, COSMETIC_IDS, CUSTOMERS, FAMILY_FAVORITES, INGREDIENTS, LEVEL_XP, MART_ITEMS, RECIPES, RECIPE_IDS, levelFromXp, recipeCost, recipeIngredients } from './content';
+import { COSMETICS, COSMETIC_IDS, CUSTOMERS, FAMILY_FAVORITES, FAMILY_REQUESTS, INGREDIENTS, LEVEL_XP, MART_ITEMS, RECIPES, RECIPE_IDS, levelFromXp, recipeCost, recipeIngredients } from './content';
 import type { CosmeticId, CosmeticSlot, CustomerId, FamilyId, IngredientId, Recipe, RecipeId } from './content';
 
 export const LEGACY_SAVE_KEY = 'nyanyang-restaurant-v2';
@@ -33,6 +33,7 @@ export interface GameState {
   album: AlbumEntry[];
   familyVisits: Record<FamilyId, number>;
   familyMemories: FamilyId[];
+  familyRequestsDone: FamilyId[];
   storyProgress: number;
   selectedGoal: GoalId | null;
   completedGoals: GoalId[];
@@ -85,6 +86,12 @@ export function goalProgress(state: GameState, id: GoalId): number {
   return Math.min(6, new Set(state.album.map(entry => `${entry.dish.id}:${entry.dish.plateColor ?? 'rose'}:${JSON.stringify(entry.dish.decorations ?? [])}`)).size);
 }
 
+export function familyRequestMatches(dish: HeldDish, target: FamilyId): boolean {
+  const request = FAMILY_REQUESTS[target];
+  const hasShape = dish.decorations === undefined ? dish.shape === request.shape : dish.decorations.some(item => item.kind === 'shape' && item.id === request.shape);
+  return dish.id === request.recipeId && hasShape;
+}
+
 function dishDetail(dish: HeldDish): string {
   const chosen = dish.decorations?.[0];
   if (chosen?.kind === 'shape') return ` ${chosen.id === 'heart' ? '하트' : chosen.id === 'star' ? '별' : '웃음'} 장식도 예쁘대요!`;
@@ -107,7 +114,7 @@ export function initialGame(today = dateKey()): GameState {
     order: { kind: 'specific', recipeId: 'fried_egg', accepted: ['fried_egg'], customerId: 'dog', special: false },
     heldDish: null, successfulServes: 0, combo: 0, discovered: [], combinations: [], stories: [], owned: [], equipped: {},
     daily: { date: today, cooked: 0, served: 0, claimed: [] }, minigame: null,
-    album: [], familyVisits: { mother: 0, father: 0, sibling: 0 }, familyMemories: [], storyProgress: 0,
+    album: [], familyVisits: { mother: 0, father: 0, sibling: 0 }, familyMemories: [], familyRequestsDone: [], storyProgress: 0,
     selectedGoal: null, completedGoals: [] };
 }
 
@@ -240,14 +247,16 @@ export function applyCommand(input: GameState, command: Command, now = Date.now(
       const storyProgress = state.storyProgress + 1;
       const chapter = storyProgress % 3 === 0 ? Math.floor(storyProgress / 3) : 0;
       const newStory = chapter > 0 && chapter <= 3 && !state.stories.includes(chapter);
-      const earned = recipeCost(dish.id) + toppingCost(dish) + (favorite ? 110 : 45) + (newStory ? 100 : 0);
-      const hearts = favorite ? 1 : 0;
+      const requestDone = !state.familyRequestsDone.includes(command.target) && familyRequestMatches(dish, command.target);
+      const earned = recipeCost(dish.id) + toppingCost(dish) + (favorite ? 110 : 45) + (newStory ? 100 : 0) + (requestDone ? 80 : 0);
+      const hearts = (favorite ? 1 : 0) + (requestDone ? 1 : 0);
       const familyVisits = { ...state.familyVisits, [command.target]: state.familyVisits[command.target] + 1 };
       const familyMemories = favorite && !state.familyMemories.includes(command.target) ? [...state.familyMemories, command.target] : state.familyMemories;
       return { state: { ...state, heldDish: null, money: state.money + earned, hearts: state.hearts + hearts, combo: 0,
-        storyProgress, stories: newStory ? [...state.stories, chapter] : state.stories, familyVisits, familyMemories },
+        storyProgress, stories: newStory ? [...state.stories, chapter] : state.stories, familyVisits, familyMemories,
+        familyRequestsDone: requestDone ? [...state.familyRequestsDone, command.target] : state.familyRequestsDone },
         outcome: { kind: 'family', dish, eater: command.target, story: newStory ? chapter : undefined, reward: { money: earned, hearts },
-          message: `${command.target === 'mother' ? '엄마' : command.target === 'father' ? '아빠' : '동생'}가 ${favorite ? '정말 좋아해요!' : '맛있게 먹었어요!'}${dishDetail(dish)} +${earned}코인${hearts ? ' · +1하트' : ''}${newStory ? ' · 이야기 스티커 발견!' : ''}` } };
+          message: `${command.target === 'mother' ? '엄마' : command.target === 'father' ? '아빠' : '동생'}가 ${favorite ? '정말 좋아해요!' : '맛있게 먹었어요!'}${dishDetail(dish)} +${earned}코인${hearts ? ` · +${hearts}하트` : ''}${requestDone ? ' · 가족 부탁 완성!' : ''}${newStory ? ' · 이야기 스티커 발견!' : ''}` } };
     }
     case 'CLAIM': {
       if (!validId(command.questId, questIds)) fail('퀘스트를 다시 확인해 주세요.');
@@ -365,6 +374,7 @@ export function restoreState(raw: unknown): GameState {
       claimed: Array.isArray(daily.claimed) ? daily.claimed.filter(id => validId(id, questIds)) : [] }, minigame,
     album, familyVisits,
     familyMemories: Array.isArray(input.familyMemories) ? input.familyMemories.filter(id => validId(id, ['mother', 'father', 'sibling'] as const)) : [],
+    familyRequestsDone: Array.isArray(input.familyRequestsDone) ? [...new Set(input.familyRequestsDone.filter(id => validId(id, ['mother', 'father', 'sibling'] as const)))] : [],
     storyProgress: validInt(input.storyProgress) ? input.storyProgress : successfulServes,
     selectedGoal: validId(input.selectedGoal, GOAL_IDS) ? input.selectedGoal : null,
     completedGoals: Array.isArray(input.completedGoals) ? input.completedGoals.filter(id => validId(id, GOAL_IDS)) : [] };

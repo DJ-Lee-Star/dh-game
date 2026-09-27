@@ -20,7 +20,7 @@
 | `src/v2/CookingInteraction.tsx`, `CookScene.tsx` | 화면상 도구·목표의 직접 포인터 입력과 단계별 음식 변화. 시범 버튼은 진행도를 주지 않는다. |
 | `src/v2/FoodArt.tsx`, `IngredientVisual.tsx`, `GearArt.tsx`, `StorageArt.tsx`, `BasketArt.tsx` | 음식·재료·꾸미기·보관 장소·바구니의 코드 그림 |
 | `public/game/family-*-v2.png` | 가족 3명의 기본·기쁨 투명 이미지 6장. 원래 가족 이미지는 역사 보존용. |
-| `src/v2/audio.ts` | 식당·마트 BGM 및 미니게임 카운트다운 소리. 음소거 설정을 존중한다. |
+| `src/v2/audio.ts` | 다섯 장소의 BGM 및 미니게임 카운트다운 소리. 음소거 설정을 존중한다. |
 | `e2e/game.e2e.ts` | 모바일 크기, 모든 레시피, 터치 스크롤, 가족, 저장·중복 구매·오디오·이미지 디코딩 검사. 새 스크린샷은 `docs/qa-v2-followup/`. |
 
 ## 다른 PC에서 실행·검증

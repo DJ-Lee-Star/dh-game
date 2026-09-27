@@ -29,7 +29,7 @@ export function FoodArt({ id, size = 96, dish }: { id: RecipeId; size?: number; 
     { kind: 'topping', id: dish.topping, x: 79, y: 24 },
   ].filter(item => item.kind !== 'topping' || item.id !== 'none') as Decoration[] : []);
   return <span className="food-art" data-plate-color={dish ? dish.plateColor ?? 'rose' : undefined} style={{ width: size, height: size }} role="img" aria-label={dish?.name ?? id.replaceAll('_', ' ')}>
-    <img src={`/game/food-${id.replaceAll('_', '-')}-v3.webp`} alt="" draggable={false} loading="lazy" decoding="async"/>
+    <img src={`/game/food-${id.replaceAll('_', '-')}-v3.${id === 'fruit_skewers' ? 'png' : 'webp'}`} alt="" draggable={false} loading="lazy" decoding="async"/>
     {decorations.map((item, index) => item.kind === 'shape' ? <ShapeGarnish key={index} shape={item.id as ShapeId} point={item}/> : <ToppingGarnish key={index} topping={item.id as ToppingId} point={item}/>)}
   </span>;
 }

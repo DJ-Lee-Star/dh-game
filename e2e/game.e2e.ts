@@ -119,7 +119,8 @@ async function cookRecipeUI(page: Page, recipeId: RecipeId) {
   await page.locator(`[data-recipe-id="${recipeId}"]`).click();
   for (let index = 0; index < RECIPES[recipeId].stages.length; index++) {
     const stage = RECIPES[recipeId].stages[index];
-    for (const ingredient of stage.ingredients) {
+    for (const [ingredientIndex, ingredient] of stage.ingredients.entries()) {
+      if (await page.locator('.stage-required span').nth(ingredientIndex).evaluate(element => element.classList.contains('added'))) continue;
       const home = INGREDIENTS[ingredient].home;
       const door = page.locator(`.storage-door.${home}`);
       if (!(await door.evaluate(element => element.classList.contains('opened')))) await door.click();
@@ -133,6 +134,8 @@ async function cookRecipeUI(page: Page, recipeId: RecipeId) {
     await gesture(page);
     await page.getByRole('button', { name: index + 1 < RECIPES[recipeId].stages.length ? /다음 조리 단계로/ : /접시 꾸미기로/ }).click();
   }
+  await page.locator('.plating-plate .food-art img').evaluate(async image => { await (image as HTMLImageElement).decode(); });
+  if (recipeId === 'fruit_skewers') await page.locator('.plating-plate').screenshot({ path: `${shots}/fruit-skewers-plating.png` });
   await expect(page.getByRole('button', { name: /이 접시로 완성하기/ })).toBeEnabled();
   await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
   await expect(page.locator('.ready-dish strong')).toHaveText(RECIPES[recipeId].name);
@@ -399,8 +402,18 @@ test('BGM starts after interaction, switches scenes and obeys mute and volume se
   await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(80);
   await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); (window as unknown as { firstTheme?: unknown }).firstTheme = (audio as unknown as { source: unknown }).source; });
   await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await expect.poll(async () => (await snapshot()).scene).toBe('kitchen');
   await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(80);
-  expect(await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); return (audio as unknown as { source: unknown }).source === (window as unknown as { firstTheme?: unknown }).firstTheme; })).toBe(true);
+  expect(await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); return (audio as unknown as { source: unknown }).source === (window as unknown as { firstTheme?: unknown }).firstTheme; })).toBe(false);
+  await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); (window as unknown as { kitchenTheme?: unknown }).kitchenTheme = (audio as unknown as { source: unknown }).source; });
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  expect(await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); return (audio as unknown as { source: unknown }).source === (window as unknown as { kitchenTheme?: unknown }).kitchenTheme; })).toBe(true);
+  await page.locator('.v2-nav button').filter({ hasText: '놀이' }).click();
+  await expect.poll(async () => (await snapshot()).scene).toBe('minigame');
+  await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(70);
+  await page.locator('.v2-nav button').filter({ hasText: '꾸미기' }).click();
+  await expect.poll(async () => (await snapshot()).scene).toBe('wardrobe');
+  await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(90);
   await page.locator('.v2-nav button').filter({ hasText: '마트' }).click();
   await expect.poll(async () => (await snapshot()).scene).toBe('mart');
   await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(70);
@@ -481,6 +494,7 @@ test('a stranded chef receives one egg and can resume cooking', async ({ page })
   for (const id of ['garden_background', 'evening_background', 'mint_outfit']) await apiCommand(page, { type: 'BUY_COSMETIC', id });
   await apiCommand(page, { type: 'START_MINIGAME' });
   await apiCommand(page, { type: 'ABANDON_MINIGAME' });
+  await apiCommand(page, { type: 'BUY_CART', items: { jam: 1, cocoa: 1 } });
   await page.reload();
   expect((await apiState(page)).money).toBe(0);
   await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
@@ -590,4 +604,45 @@ test('recipe pages fit small screens, album remakes a saved plate, and practice 
   await page.getByRole('button', { name: '연습 마치기' }).click();
   await expect(page.getByText(/연습에서 .*개 받았어요/)).toBeVisible();
   expect((await apiState(page)).money).toBe(money);
+});
+
+test('family request changes the restaurant and ingredient sorting is a distinct free game', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await newGame(page, '가족과 놀이');
+  await page.getByRole('button', { name: /가족의 부탁/ }).click();
+  await expect(page.locator('.family-request-list')).toContainText('마음 담은 프라이');
+  await page.getByRole('button', { name: '닫기' }).click();
+  await apiCommand(page, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'heart', decorations: [{ kind: 'shape', id: 'heart', x: 53, y: 30 }] });
+  await page.reload();
+  await page.getByRole('button', { name: '가족에게 대접하기' }).click();
+  await expect(page.locator('.family-choices button').filter({ hasText: '아빠' })).toContainText('부탁한 접시예요');
+  await page.locator('.family-choices button').filter({ hasText: '아빠' }).click();
+  await page.getByRole('button', { name: '계속하기' }).click();
+  expect((await apiState(page)).familyRequestsDone).toEqual(['father']);
+  await expect(page.locator('.story-room-props')).toContainText('☕');
+  await page.locator('.v2-nav button').filter({ hasText: '놀이' }).click();
+  await page.getByRole('button', { name: /재료 집 찾기/ }).click();
+  await page.locator('.sorting-v2').screenshot({ path: `${shots}/sorting-320.png` });
+  const fit = await page.evaluate(() => { const main = document.querySelector('.v2-main')!; return { scroll: main.scrollHeight, height: main.clientHeight }; });
+  expect(fit.scroll).toBeLessThanOrEqual(fit.height + 1);
+  for (let round = 0; round < 5; round++) {
+    const ingredientName = await page.locator('.sorting-item strong').textContent();
+    const ingredient = (Object.keys(INGREDIENTS) as IngredientId[]).find(id => INGREDIENTS[id].name === ingredientName);
+    if (!ingredient) throw new Error('sorting item missing');
+    const homeName = { fridge: '냉장고', shelf: '간식 선반', pantry: '상온 보관장' }[INGREDIENTS[ingredient].home];
+    await page.locator('.sorting-homes button').filter({ hasText: homeName }).click();
+    await expect(page.locator('.sorting-feedback')).toContainText('쏙!');
+    if (round < 4) await expect(page.locator('.sorting-progress')).toContainText(`${round + 2}/5`);
+  }
+  await expect(page.locator('.sorting-finish')).toContainText('최고 기록 5개');
+  await page.reload();
+  await page.locator('.v2-nav button').filter({ hasText: '놀이' }).click();
+  await page.getByRole('button', { name: /재료 집 찾기/ }).click();
+  for (let round = 0; round < 5; round++) {
+    const ingredientName = await page.locator('.sorting-item strong').textContent();
+    const ingredient = (Object.keys(INGREDIENTS) as IngredientId[]).find(id => INGREDIENTS[id].name === ingredientName)!;
+    await page.locator('.sorting-homes button').filter({ hasText: { fridge: '냉장고', shelf: '간식 선반', pantry: '상온 보관장' }[INGREDIENTS[ingredient].home] }).click();
+    if (round < 4) await expect(page.locator('.sorting-progress')).toContainText(`${round + 2}/5`);
+  }
+  await expect(page.locator('.sorting-finish')).toContainText('최고 기록 5개');
 });

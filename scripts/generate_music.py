@@ -1,4 +1,4 @@
-"""Render the two original Nyangnyang Restaurant themes.
+"""Render the original Nyangnyang Restaurant scene themes.
 
 Requires NumPy and ffmpeg for asset authoring only. No downloaded samples or
 third-party composition is used. Run from the repository root.
@@ -6,6 +6,7 @@ third-party composition is used. Run from the repository root.
 
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import wave
 
@@ -31,6 +32,24 @@ MELODIES = {
         "G4 C5 D5 C5 | B4 - G4 - | A4 G4 E4 G4 | D4 - - -",
         "A4 C5 E5 G5 | E5 C5 A4 - | B4 D5 G5 D5 | B4 G4 E4 -",
         "G4 B4 D5 E5 | D5 B4 A4 G4 | C5 A4 G4 E4 | D4 - - -",
+    ],
+    "kitchen": [
+        "C4 E4 G4 - | E4 G4 A4 - | G4 E4 D4 E4 | C4 - - -",
+        "E4 G4 C5 - | B4 G4 E4 - | F4 A4 G4 E4 | D4 - - -",
+        "C4 E4 G4 C5 | A4 G4 E4 - | F4 A4 C5 A4 | G4 - E4 -",
+        "D4 F4 A4 - | G4 E4 D4 - | E4 G4 E4 D4 | C4 - - -",
+    ],
+    "minigame": [
+        "G4 C5 E5 C5 | A4 C5 E5 - | G4 B4 D5 B4 | G4 - - -",
+        "A4 C5 E5 G5 | E5 C5 A4 - | G4 B4 D5 G5 | E5 D5 C5 -",
+        "C5 E5 G5 E5 | C5 A4 G4 - | A4 C5 E5 C5 | G4 - - -",
+        "G4 B4 D5 G5 | E5 D5 C5 A4 | G4 E4 D4 G4 | C5 - - -",
+    ],
+    "wardrobe": [
+        "C5 - G4 - | A4 - E4 - | F4 - A4 - | G4 - - -",
+        "E4 - G4 - | C5 - B4 - | A4 - G4 - | E4 - - -",
+        "F4 - A4 - | C5 - A4 - | G4 - E4 - | D4 - - -",
+        "E4 - G4 - | A4 - G4 - | E4 - D4 - | C4 - - -",
     ],
 }
 CHORDS = [
@@ -70,10 +89,11 @@ def add(track: np.ndarray, start: float, sound: np.ndarray, volume: float):
 
 
 def render(scene: str):
-    beat = 60 / (88 if scene == "restaurant" else 101)
+    tempo = {"restaurant": 88, "mart": 101, "kitchen": 94, "minigame": 108, "wardrobe": 79}
+    beat = 60 / tempo[scene]
     length = 32 * 4 * beat
     track = np.zeros(int(length * RATE), dtype=np.float32)
-    rng = np.random.default_rng(20260927 if scene == "restaurant" else 20260928)
+    rng = np.random.default_rng(20260927 + list(tempo).index(scene))
     measures = [bar.strip().split() for group in MELODIES[scene] for bar in group.split("|")]
     assert len(measures) == 16 and all(len(bar) == 4 for bar in measures)
     for bar in range(32):
@@ -85,16 +105,16 @@ def render(scene: str):
             note = measures[group][beat_index]
             if note != "-":
                 # A quieter second statement leaves room for cooking sounds.
-                add(track, at, instrument(note, beat * 1.6, "bell" if scene == "restaurant" else "guitar"), .105 if section == 0 else .079)
+                add(track, at, instrument(note, beat * 1.6, "bell" if scene in ("restaurant", "wardrobe") else "guitar"), .105 if section == 0 else .079)
             if beat_index in (0, 2):
-                add(track, at, instrument(chord[0], beat * 1.6, "bass"), .095 if scene == "restaurant" else .11)
+                add(track, at, instrument(chord[0], beat * 1.6, "bass"), .095 if scene in ("restaurant", "wardrobe") else .11)
             if beat_index in (1, 3):
                 for j, chord_note in enumerate(chord[1:]):
                     add(track, at + j * .045, instrument(chord_note, beat * 1.7, "guitar"), .028)
-            if scene == "mart" or beat_index in (1, 3):
+            if scene in ("mart", "minigame") or (scene != "wardrobe" and beat_index in (1, 3)):
                 noise = rng.normal(0, 1, int(RATE * .09)).astype(np.float32)
-                decay = np.exp(-np.arange(len(noise)) / RATE * (48 if scene == "mart" else 60))
-                add(track, at, noise * decay, .006 if scene == "mart" else .003)
+                decay = np.exp(-np.arange(len(noise)) / RATE * (48 if scene in ("mart", "minigame") else 60))
+                add(track, at, noise * decay, .006 if scene in ("mart", "minigame") else .003)
         if section and bar % 4 == 3:
             add(track, (bar * 4 + 3.5) * beat, instrument(chord[1], beat * .5, "bell"), .032)
     # Short room echoes give the plucks a softer tail without obscuring speech.
@@ -124,5 +144,5 @@ def render(scene: str):
 
 
 if __name__ == "__main__":
-    for name in ("restaurant", "mart"):
+    for name in (sys.argv[1:] or MELODIES.keys()):
         render(name)

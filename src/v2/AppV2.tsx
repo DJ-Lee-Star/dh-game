@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, ChefHat, ChevronLeft, Coins, Gift, Heart, Home, Images, Music2, Settings2, ShoppingBasket, Sparkles, Trophy, Volume2, X } from 'lucide-react';
-import { COSMETICS, COSMETIC_IDS, CUSTOMERS, FAMILY, FAMILY_FAVORITES, HOMES, INGREDIENTS, MART_ITEMS, MAX_LEVEL, RECIPES, RECIPE_IDS, STORIES, levelFromXp, recipeIngredients } from './content';
+import { COSMETICS, COSMETIC_IDS, CUSTOMERS, FAMILY, FAMILY_FAVORITES, FAMILY_REQUESTS, HOMES, INGREDIENTS, MART_ITEMS, MAX_LEVEL, RECIPES, RECIPE_IDS, STORIES, levelFromXp, recipeIngredients } from './content';
 import type { CosmeticId, CosmeticSlot, FamilyId, HomeId, IngredientId, Recipe, RecipeId } from './content';
 import { activeProfile, ApiError, createProfile, fetchState, importOldSave, savedProfiles, saveProfile, selectProfile, sendCommand } from './api';
 import type { Profile } from './api';
-import { GOAL_IDS, GOAL_INFO, LEGACY_SAVE_KEY, canRecoverIngredient, goalProgress, levelProgress, minigameDrops, orderMatches, validDecorations } from './engine';
+import { GOAL_IDS, GOAL_INFO, LEGACY_SAVE_KEY, canRecoverIngredient, familyRequestMatches, goalProgress, levelProgress, minigameDrops, orderMatches, validDecorations } from './engine';
 import type { Command, Decoration, GameState, HeldDish, Outcome, PlateColor, ShapeId, ToppingId } from './engine';
 import { FoodArt } from './FoodArt';
 import { GearArt } from './GearArt';
@@ -17,7 +17,7 @@ import { clearProfileDrafts, readProfileDraft, useProfileDraft } from './drafts'
 import './AppV2.css';
 
 type View = 'restaurant' | 'kitchen' | 'mart' | 'minigame' | 'wardrobe';
-type Modal = 'settings' | 'recipes' | 'quests' | 'family' | 'stories' | 'album' | 'goals' | null;
+type Modal = 'settings' | 'recipes' | 'quests' | 'family' | 'familyRequests' | 'stories' | 'album' | 'goals' | null;
 const familyIds: FamilyId[] = ['mother', 'father', 'sibling'];
 const homeIds: HomeId[] = ['fridge', 'shelf', 'pantry'];
 const customerImage = (id: keyof typeof CUSTOMERS, happy = false) => `/game/customer-${id}${happy ? '-happy' : ''}.webp`;
@@ -46,7 +46,7 @@ export default function AppV2() {
       .finally(() => { if (live) setLoading(false); });
     return () => { live = false; };
   }, [profile]);
-  useEffect(() => { audio.setScene(view === 'mart' ? 'mart' : 'restaurant'); }, [view]);
+  useEffect(() => { audio.setScene(view); }, [view]);
   useEffect(() => () => audio.stopMusic(), []);
   useEffect(() => {
     if (!outcome) return;
@@ -60,7 +60,7 @@ export default function AppV2() {
     return () => clearTimeout(timer);
   }, [notice, retryAvailable]);
 
-  const enter = () => { audio.unlock(); audio.setScene(view === 'mart' ? 'mart' : 'restaurant'); };
+  const enter = () => { audio.unlock(); audio.setScene(view); };
   const navigate = (next: View) => { enter(); setView(next); setNotice(''); };
   const run = useCallback(async (command: Command, done?: () => void) => {
     if (!profile || busy) return false;
@@ -125,7 +125,7 @@ export default function AppV2() {
     <main className="v2-main" key={view}>
       {view === 'restaurant' && <div className="restaurant-v2">
         <div className={`restaurant-scene-v2 ${restaurantBackground}`}>
-          <div className="story-room-props" aria-label="완성한 이야기의 식당 장식">{game.stories.includes(1) && <span title="비 오는 날의 따뜻한 머그">☕</span>}{game.stories.includes(2) && <span title="생일 축하 풍선">🎈</span>}{game.stories.includes(3) && <span title="밤 축제 별 장식">🌟</span>}</div>
+          <div className="story-room-props" aria-label="완성한 이야기의 식당 장식">{game.stories.includes(1) && <span title="비 오는 날의 따뜻한 머그">☕</span>}{game.stories.includes(2) && <span title="생일 축하 풍선">🎈</span>}{game.stories.includes(3) && <span title="밤 축제 별 장식">🌟</span>}{game.familyRequestsDone.map(id => <span key={id} title={`${FAMILY[id]}의 부탁으로 놓인 물건`}>{FAMILY_REQUESTS[id].prop}</span>)}</div>
           <div className="room-heading"><span>{order.special ? '⭐ 스페셜 손님이 왔어요!' : '🍽️ 오늘의 손님'}</span><strong>{CUSTOMERS[order.customerId]}</strong></div>
           <div className="order-note"><small>{order.kind === 'wish' ? '오늘은 골라 주는 주문' : '주문서'}</small><div><FoodArt id={order.recipeId} size={74}/><span><strong>{order.kind === 'wish' ? order.wish : RECIPES[order.recipeId].name}</strong><small>{order.kind === 'wish' ? `${order.accepted.length}가지 요리 중 골라도 좋아요` : order.special ? '별님은 새로운 맛을 기다리고 있어요' : '시간 제한 없이 천천히 만들어 주세요'}</small></span></div></div>
           <div className="restaurant-stage"><ChefFigure game={game}/><div className="restaurant-counter"><div className="counter-worktop">{game.heldDish && <FoodArt id={game.heldDish.id} dish={game.heldDish} size={75}/>}</div><div className="counter-front"><span>냥냥식당</span></div></div><div className="customer-figure"><img src={customerImage(order.customerId)} alt={`${CUSTOMERS[order.customerId]} 손님`}/><span>{CUSTOMERS[order.customerId]}</span></div></div>
@@ -135,12 +135,13 @@ export default function AppV2() {
             : <><p className="friendly-line">{level === MAX_LEVEL ? '최고 레벨 셰프! 오늘도 마음에 드는 요리를 만들어 봐요. 🌟' : game.xp > 0 ? '다음엔 어떤 맛을 만들까? 요리하러 가요!' : '첫 요리 하나만 만들면 Lv.2가 돼요! 🌟'}</p><button className="big-primary" onClick={() => navigate('kitchen')}>주방에서 요리하기 <ChefHat size={19}/></button></>}
           {legacyExists && game.successfulServes === 0 && game.xp === 0 && <button className="legacy-banner" onClick={() => setModal('settings')}>📦 예전 식당 기록이 있어요 · 설정에서 가져오기</button>}
           <button className="story-progress" onClick={() => setModal('stories')}><span>📖 {STORIES[Math.min(2, Math.floor(game.storyProgress / 3))].title}</span><strong>{game.storyProgress >= 9 ? '모든 이야기 완성!' : `${game.storyProgress % 3}/3 접시 · 이야기 보기 →`}</strong></button>
+          <button className="story-progress family-request-progress" onClick={() => setModal('familyRequests')}><span>🐾 가족의 부탁</span><strong>{game.familyRequestsDone.length}/3개 · 부탁 보기 →</strong></button>
           {level === MAX_LEVEL && <button className="story-progress goal-progress" onClick={() => setModal('goals')}><span>🏆 내가 고르는 목표</span><strong>{game.selectedGoal ? GOAL_INFO[game.selectedGoal].name : '마음에 드는 목표 고르기'} →</strong></button>}
         </div>
       </div>}
       {view === 'kitchen' && <Kitchen key={`${profile.id}:${remakeSerial}`} profileId={profile.id} game={game} busy={busy} run={run} onMart={() => navigate('mart')} onRestaurant={() => navigate('restaurant')}/>}
       {view === 'mart' && <Mart profileId={profile.id} game={game} busy={busy} run={run} cartResetSerial={cartResetSerial}/>}
-      {view === 'minigame' && <MiniGame key={game.minigame?.id ?? 'idle'} game={game} busy={busy} run={run}/>}
+      {view === 'minigame' && <MiniGame key={game.minigame?.id ?? 'idle'} profileId={profile.id} game={game} busy={busy} run={run}/>}
       {view === 'wardrobe' && <Wardrobe game={game} busy={busy} run={run}/>}
     </main>
     <nav className="v2-nav" aria-label="게임 장소">
@@ -152,7 +153,8 @@ export default function AppV2() {
     </nav>
     {notice && <div className="v2-toast" role="status" onClick={() => setNotice('')}>{notice}{retryAvailable && <button onClick={event => { event.stopPropagation(); retry(); }}>같은 요청 다시 확인</button>}</div>}
     {outcome && (outcome.kind === 'customer' || outcome.kind === 'family') && <EatingScene outcome={outcome} onDone={() => setOutcome(null)}/>}
-    {modal === 'family' && game.heldDish && <Overlay title="누구에게 줄까요?" onClose={() => setModal(null)}><p className="overlay-lead">가족마다 좋아하는 음식이 달라요. 원래 손님 주문은 그대로 기다려요!</p><div className="family-choices">{familyIds.map(id => <button key={id} disabled={busy} onClick={() => run({ type: 'SERVE', target: id }, () => setModal(null))}><img src={familyImage(id)} alt={`${FAMILY[id]} 캐릭터`}/><strong>{FAMILY[id]}</strong><small>{FAMILY_FAVORITES[id].includes(game.heldDish!.id) ? '좋아하는 음식! 💗' : '맛있게 먹을게요'}</small><small>{game.familyVisits[id]}번 함께 먹었어요{game.familyMemories.includes(id) ? ' · 추억 스티커 ⭐' : ''}</small></button>)}</div></Overlay>}
+    {modal === 'family' && game.heldDish && <Overlay title="누구에게 줄까요?" onClose={() => setModal(null)}><p className="overlay-lead">가족마다 좋아하는 음식이 달라요. 원래 손님 주문은 그대로 기다려요!</p><div className="family-choices">{familyIds.map(id => <button key={id} disabled={busy} onClick={() => run({ type: 'SERVE', target: id }, () => setModal(null))}><img src={familyImage(id)} alt={`${FAMILY[id]} 캐릭터`}/><strong>{FAMILY[id]}</strong><small>{FAMILY_FAVORITES[id].includes(game.heldDish!.id) ? '좋아하는 음식! 💗' : '맛있게 먹을게요'}</small><small>{!game.familyRequestsDone.includes(id) && familyRequestMatches(game.heldDish!, id) ? '부탁한 접시예요! +80코인 · +1하트' : game.familyRequestsDone.includes(id) ? '부탁 완성 ✓' : `부탁: ${FAMILY_REQUESTS[id].title}`}</small><small>{game.familyVisits[id]}번 함께 먹었어요{game.familyMemories.includes(id) ? ' · 추억 스티커 ⭐' : ''}</small></button>)}</div></Overlay>}
+    {modal === 'familyRequests' && <Overlay title="가족의 작은 부탁" onClose={() => setModal(null)}><p className="overlay-lead">좋아하는 요리에 장식 모양을 골라 대접해요. 서두르지 않아도 되고 다른 요리도 언제든 환영해요!</p><div className="family-request-list">{familyIds.map(id => <article key={id}><img src={familyImage(id)} alt=""/><div><strong>{FAMILY[id]} · {FAMILY_REQUESTS[id].title}</strong><small>{RECIPES[FAMILY_REQUESTS[id].recipeId].name}에 {FAMILY_REQUESTS[id].shape === 'heart' ? '하트' : FAMILY_REQUESTS[id].shape === 'star' ? '별' : '웃음'} 장식 놓기</small><span>{game.familyRequestsDone.includes(id) ? `완성! 식당에 ${FAMILY_REQUESTS[id].prop}가 놓였어요` : '완성하면 +80코인 · +1하트'}</span></div></article>)}</div></Overlay>}
     {modal === 'recipes' && <Overlay title="냥냥 요리 도감" onClose={() => setModal(null)}><div className="recipe-collection">{RECIPE_IDS.map(id => { const recipe = RECIPES[id]; const secret = (recipe as Recipe).secret; const visible = !secret || game.discovered.includes(id); return <div key={id} className="collection-row"><FoodArt id={id} size={60}/><span><strong>{visible ? recipe.name : '비밀 레시피 ???'}</strong><small>{visible ? `Lv.${recipe.level} · ${game.discovered.includes(id) ? '완성했어요 ✓' : '아직 만들지 않았어요'}` : (recipe as Recipe).hint}</small></span></div>; })}</div><h3>새 조합 발견 {game.combinations.length}개</h3></Overlay>}
     {modal === 'album' && <Overlay title="내 요리 앨범" onClose={() => setModal(null)}><p className="overlay-lead">내가 만든 접시 {game.album.length}개 · 장식과 이름이 그대로 남아요.</p><div className="album-grid">{[...game.album].reverse().map(entry => <article key={entry.id}><FoodArt id={entry.dish.id} dish={entry.dish} size={116}/><strong>{entry.dish.name || RECIPES[entry.dish.id].name}</strong><small>{new Date(entry.createdAt).toLocaleDateString('ko-KR')} · {entry.dish.plateColor === 'mint' ? '민트' : entry.dish.plateColor === 'cream' ? '크림' : '분홍'} 접시</small><button onClick={() => { clearProfileDrafts(profile.id, 'kitchen-'); try { localStorage.setItem(`nyang-v2-draft:${profile.id}:kitchen-recipe`, JSON.stringify(entry.dish.id)); } catch { /* The kitchen remains usable without browser storage. */ } setRemakeSerial(value => value + 1); setModal(null); navigate('kitchen'); }}>이 요리 다시 만들기</button></article>)}{game.album.length === 0 && <p>첫 요리를 만들면 이곳에 접시가 모여요.</p>}</div></Overlay>}
     {modal === 'quests' && <Overlay title="오늘의 작은 목표" onClose={() => setModal(null)}><div className="quest-v2">{(['cook_2', 'serve_2'] as const).map(id => { const value = id === 'cook_2' ? game.daily.cooked : game.daily.served; const claimed = game.daily.claimed.includes(id); return <div key={id}><strong>{id === 'cook_2' ? '요리 2번 만들기' : '손님 2명 대접하기'}</strong><span>{Math.min(2, value)}/2</span><button disabled={claimed || value < 2 || busy} onClick={() => run({ type: 'CLAIM', questId: id })}>{claimed ? '오늘 받았어요' : id === 'cook_2' ? '150코인 받기' : '하트 2개 받기'}</button></div>; })}</div></Overlay>}
@@ -226,7 +228,7 @@ function Kitchen({ profileId, game, busy, run, onMart, onRestaurant }: { profile
     if (INGREDIENTS[id].price > 0 && game.inventory[id] < total) { setHint(`앗, ${INGREDIENTS[id].name}이(가) 부족해요! 마트에서 데려올까요?`); audio.effect('error'); return; }
     setAdded([...added, id]); setHome(null); setHint(`${INGREDIENTS[id].name} 쏙! ${stage.instruction}`); audio.effect('tap');
   };
-  const nextStep = () => { if (!recipe || !stage || progress < 100) return; if (step + 1 < recipe.stages.length) { setStep(step + 1); setAdded([]); setProgress(0); setHome(null); setCookHelp(false); setHint('좋아요! 다음 단계도 해 볼까요?'); } else { setPlating(true); setHint('마지막으로 요리를 꾸며 주세요!'); } };
+  const nextStep = () => { if (!recipe || !stage || progress < 100) return; if (step + 1 < recipe.stages.length) { const next = recipe.stages[step + 1]; const carried = stage.action === 'wash' && next.action === 'slice' && next.ingredients[0] === stage.ingredients[0] ? [stage.ingredients[0]] : []; setStep(step + 1); setAdded(carried); setProgress(0); setHome(null); setCookHelp(false); setHint(carried.length ? `씻은 ${INGREDIENTS[carried[0]].name}을(를) 도마로 가져왔어요!` : '좋아요! 다음 단계도 해 볼까요?'); } else { setPlating(true); setHint('마지막으로 요리를 꾸며 주세요!'); } };
   const finish = async () => { if (!selected) return; const finalTopping = [...decorations].reverse().find(item => item.kind === 'topping')?.id as ToppingId | undefined; const finalShape = [...decorations].reverse().find(item => item.kind === 'shape')?.id as ShapeId | undefined; const success = await run({ type: 'COOK', recipeId: selected, topping: finalTopping ?? 'none', shape: finalShape ?? 'heart', decorations, plateColor, name: dishName }); if (success) { clearProfileDrafts(profileId, 'kitchen-'); reset(); onRestaurant(); } };
   if (game.heldDish) return <div className="kitchen-v2"><div className="v2-section-title"><span>🍳 냥냥 주방</span><h2>요리가 완성됐어요!</h2></div><div className="kitchen-ready"><FoodArt id={game.heldDish.id} dish={game.heldDish} size={190}/><h3>{RECIPES[game.heldDish.id].name}</h3><button className="big-primary" onClick={onRestaurant}>식당에서 대접하기</button></div></div>;
   if (!recipe || !stage) return <div className="kitchen-v2 recipe-select-v2"><div className="v2-section-title"><span>🍳 냥냥 주방</span><h2>오늘은 뭘 만들까?</h2><p>주문 요리를 먼저 보여줘요. 원하는 요리를 골라요!</p></div>{canRecoverIngredient(game) && <div className="recovery-card"><strong>재료가 모두 떨어졌나요?</strong><button className="big-primary" disabled={busy} onClick={() => run({ type: 'RECOVER_INGREDIENT' }, () => pickRecipe('fried_egg'))}>달걀 1개 받고 프라이 만들기</button></div>}<div className="recipe-cards">{recipeOptions.slice(recipePage * 4, recipePage * 4 + 4).map(id => { const item = RECIPES[id]; const locked = item.level > levelFromXp(game.xp); const secret = (item as Recipe).secret; const counts: Partial<Record<IngredientId, number>> = {}; for (const ing of recipeIngredients(id)) counts[ing] = (counts[ing] ?? 0) + 1; const missing = Object.entries(counts).filter(([ing, count]) => game.inventory[ing as IngredientId] < (count ?? 0)); return <button key={id} data-recipe-id={id} className={`recipe-card-v2 ${locked ? 'locked' : ''}`} disabled={locked} onClick={() => pickRecipe(id)}><FoodArt id={id} size={84}/><span><strong>{locked ? `Lv.${item.level} 해금` : secret && !game.discovered.includes(id) ? '비밀 요리 ???' : item.name}</strong><small>{locked ? '조금만 더 요리해요' : secret && !game.discovered.includes(id) ? (item as Recipe).hint : `${item.stages.length}단계 · +${item.xp} XP`}</small>{!locked && missing.length > 0 && <em>재료 부족: {missing.map(([ing]) => INGREDIENTS[ing as IngredientId].name).join(', ')}</em>}</span>{game.order.accepted.includes(id) && <b className="order-flag">주문</b>}</button>; })}</div><div className="recipe-pages"><button disabled={recipePage === 0} onClick={() => setRecipePage(value => value - 1)}>← 이전 요리</button><span>{recipePage + 1}/{recipePages}</span><button disabled={recipePage >= recipePages - 1} onClick={() => setRecipePage(value => value + 1)}>다음 요리 →</button></div></div>;
@@ -291,7 +293,8 @@ function Mart({ profileId, game, busy, run, cartResetSerial }: { profileId: stri
     </div><p className="mart-message" role="status">{message}</p><div className={`mart-cart-dock ${lastAdded ? 'cart-bump' : ''}`}><button className="cart-summary" onClick={() => setShowCart(!showCart)} aria-expanded={showCart}><ShoppingBasket size={22}/><strong>장바구니 {count}개</strong><span>{total}코인 {showCart ? '▲' : '▼'}</span></button>{showCart && <div className="cart-detail">{count === 0 ? <p>아직 비어 있어요. 진열대에서 재료를 골라요!</p> : <>{Object.entries(cart).map(([id, quantity]) => <div className="cart-row" key={id}><span><IngredientVisual id={id as IngredientId} size={30}/> {INGREDIENTS[id as IngredientId].name}</span><div><button aria-label={`${INGREDIENTS[id as IngredientId].name} 빼기`} onClick={() => add(id as IngredientId, -1)}>−</button><strong>{quantity}</strong><button aria-label={`${INGREDIENTS[id as IngredientId].name} 더하기`} onClick={() => add(id as IngredientId, 1)}>+</button></div></div>)}<div className="cart-total"><span>합계</span><strong>{total}코인</strong></div><button className="big-primary" disabled={busy || total > game.money} onClick={checkout}>{atCounter ? '계산하고 재료 가져가기' : '계산대로 돌아가기'}</button><button className="subtle-link" onClick={() => { setCart({}); setLastAdded(null); }}>장바구니 비우기</button></>}</div>}</div></div>;
 }
 
-function MiniGame({ game, busy, run }: { game: GameState; busy: boolean; run: (command: Command) => Promise<boolean> }) {
+function MiniGame({ profileId, game, busy, run }: { profileId: string; game: GameState; busy: boolean; run: (command: Command) => Promise<boolean> }) {
+  const [mode, setMode] = useState<'catch' | 'sort'>('catch');
   const [basketX, setBasketX] = useState(50);
   const [practice, setPractice] = useState<{ id: string; startedAt: number; seed: number } | null>(null);
   const [practiceResult, setPracticeResult] = useState<number | null>(null);
@@ -336,7 +339,36 @@ function MiniGame({ game, busy, run }: { game: GameState; busy: boolean; run: (c
   const changeBasket = (value: number) => { const next = Math.max(8, Math.min(92, value)); basketRef.current = next; setBasketX(next); };
   const startPractice = () => { resolved.current.clear(); caughtRef.current = []; setCaught([]); sent.current = false; lastCountdown.current = 0; setPracticeResult(null); setPractice({ id: `practice-${Date.now()}`, startedAt: Date.now(), seed: Math.floor(Math.random() * 2 ** 31) }); };
   const move = (clientX: number) => { if (!board.current) return; const rect = board.current.getBoundingClientRect(); changeBasket((clientX - rect.left) / rect.width * 100); };
-  return <div className="minigame-v2"><div className="v2-section-title"><span>🧺 재료 받기 놀이</span><h2>떨어지는 재료를 쏙!</h2><p>바구니를 좌우로 움직여 받아요. 천천히 즐겨요!</p></div>{!active ? <div className="minigame-start"><div className="basket-hero"><BasketArt size={108}/></div>{practiceResult !== null && <p role="status">연습에서 {practiceResult}개 받았어요! 연습에는 코인과 재료가 오가지 않아요.</p>}<p>참가비 <strong>100코인</strong> · 완주하면 점수와 관계없이 정해진 재료 꾸러미를 받아요.</p><div className="reward-tiers"><span>0~3점: 달걀 2·빵 1 (135코인어치)</span><span>4~7점: 우유 2·빵 1 (185코인어치)</span><span>8~12점: 달걀 2·우유 2·잼 1 (255코인어치)</span></div><button className="soft-button" onClick={startPractice}>무료로 연습하기</button><button className="big-primary" disabled={busy || game.money < 100} onClick={() => run({ type: 'START_MINIGAME' })}>{game.money < 100 ? '100코인이 필요해요' : '100코인 내고 시작하기'}</button></div> : <><div className="minigame-stats"><span>{practice ? '무료 연습' : '점수'} <strong>{caught.length}</strong>/12</span><span>남은 시간 <strong>{remaining}</strong>초</span></div>{endingSoon && <div className="minigame-warning" role="status">곧 끝나요! {remaining}초 남았어요</div>}<div className={`catch-board ${endingSoon ? "ending-soon" : ""}`} ref={board} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); move(event.clientX); }} onPointerMove={event => { if (event.buttons) move(event.clientX); }} aria-label="재료를 받는 놀이판">{drops.map(drop => { const age = elapsed - drop.at; if (age < 0 || age > 2400) return null; return <span className="falling-food" key={drop.id} style={{ left: `${drop.x}%`, top: `${Math.min(85, age / 2050 * 85)}%` }}><IngredientVisual id={drop.ingredient} size={40}/></span>; })}<div className="catch-basket" style={{ left: `${basketX}%` }}><BasketArt size={73}/></div></div><div className="basket-controls"><button onClick={() => changeBasket(basketRef.current - 12)}>← 왼쪽</button><button onClick={() => changeBasket(basketRef.current + 12)}>오른쪽 →</button></div><button className="subtle-link" disabled={busy} onClick={() => practice ? (setPracticeResult(caughtRef.current.length), setPractice(null)) : run({ type: 'ABANDON_MINIGAME' })}>{practice ? '연습 마치기' : '그만하기 · 참가비는 돌아오지 않아요'}</button></>}</div>;
+  if (mode === 'sort' && !game.minigame) return <SortingGame profileId={profileId} game={game} onBack={() => setMode('catch')}/>;
+  return <div className="minigame-v2"><div className="v2-section-title"><span>🧺 재료 받기 놀이</span><h2>떨어지는 재료를 쏙!</h2><p>바구니를 좌우로 움직여 받아요. 천천히 즐겨요!</p></div>{!active ? <div className="minigame-start"><div className="basket-hero"><BasketArt size={108}/></div>{practiceResult !== null && <p role="status">연습에서 {practiceResult}개 받았어요! 연습에는 코인과 재료가 오가지 않아요.</p>}<p>참가비 <strong>100코인</strong> · 완주하면 점수와 관계없이 정해진 재료 꾸러미를 받아요.</p><div className="reward-tiers"><span>0~3점: 달걀 2·빵 1 (135코인어치)</span><span>4~7점: 우유 2·빵 1 (185코인어치)</span><span>8~12점: 달걀 2·우유 2·잼 1 (255코인어치)</span></div><button className="soft-button" onClick={() => setMode('sort')}>새 놀이 · 재료 집 찾기 🏠</button><button className="soft-button" onClick={startPractice}>무료로 연습하기</button><button className="big-primary" disabled={busy || game.money < 100} onClick={() => run({ type: 'START_MINIGAME' })}>{game.money < 100 ? '100코인이 필요해요' : '100코인 내고 시작하기'}</button></div> : <><div className="minigame-stats"><span>{practice ? '무료 연습' : '점수'} <strong>{caught.length}</strong>/12</span><span>남은 시간 <strong>{remaining}</strong>초</span></div>{endingSoon && <div className="minigame-warning" role="status">곧 끝나요! {remaining}초 남았어요</div>}<div className={`catch-board ${endingSoon ? "ending-soon" : ""}`} ref={board} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); move(event.clientX); }} onPointerMove={event => { if (event.buttons) move(event.clientX); }} aria-label="재료를 받는 놀이판">{drops.map(drop => { const age = elapsed - drop.at; if (age < 0 || age > 2400) return null; return <span className="falling-food" key={drop.id} style={{ left: `${drop.x}%`, top: `${Math.min(85, age / 2050 * 85)}%` }}><IngredientVisual id={drop.ingredient} size={40}/></span>; })}<div className="catch-basket" style={{ left: `${basketX}%` }}><BasketArt size={73}/></div></div><div className="basket-controls"><button onClick={() => changeBasket(basketRef.current - 12)}>← 왼쪽</button><button onClick={() => changeBasket(basketRef.current + 12)}>오른쪽 →</button></div><button className="subtle-link" disabled={busy} onClick={() => practice ? (setPracticeResult(caughtRef.current.length), setPractice(null)) : run({ type: 'ABANDON_MINIGAME' })}>{practice ? '연습 마치기' : '그만하기 · 참가비는 돌아오지 않아요'}</button></>}</div>;
+}
+
+const sortingPool: IngredientId[] = ['egg', 'bread', 'cocoa', 'milk', 'jam', 'banana', 'tomato', 'cheese', 'strawberry', 'noodle'];
+function SortingGame({ profileId, game, onBack }: { profileId: string; game: GameState; onBack: () => void }) {
+  const [rotation, setRotation] = useState(0);
+  const [round, setRound] = useState(0);
+  const [firstTry, setFirstTry] = useState(0);
+  const [missed, setMissed] = useState(false);
+  const [correct, setCorrect] = useState(false);
+  const [feedback, setFeedback] = useState('그림을 보고 재료가 살고 싶은 곳을 골라요.');
+  const [best, setBest] = useProfileDraft<number>(profileId, 'sorting-best', 0, (value): value is number => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 5);
+  const pool = sortingPool.filter(id => INGREDIENTS[id].level <= levelFromXp(game.xp));
+  const items = Array.from({ length: Math.min(5, pool.length) }, (_, index) => pool[(index + rotation) % pool.length]);
+  const item = items[round];
+  useEffect(() => {
+    if (!correct) return;
+    const timer = window.setTimeout(() => { setRound(value => value + 1); setCorrect(false); setMissed(false); setFeedback('다음 재료의 집은 어디일까요?'); }, 750);
+    return () => window.clearTimeout(timer);
+  }, [correct]);
+  const choose = (home: HomeId) => {
+    if (!item || correct) return;
+    if (INGREDIENTS[item].home !== home) { setMissed(true); setFeedback(`${INGREDIENTS[item].name}은(는) ${HOMES[home].name}보다 다른 곳이 좋아요. 다시 골라 볼까요?`); audio.effect('error'); return; }
+    const score = firstTry + (missed ? 0 : 1);
+    setFirstTry(score); setBest(value => Math.max(value, score)); setCorrect(true);
+    setFeedback(`${INGREDIENTS[item].name}이(가) ${HOMES[home].name}에 쏙!`); audio.effect('catch');
+  };
+  const restart = () => { setRound(0); setFirstTry(0); setMissed(false); setCorrect(false); setFeedback('이번에는 다른 재료도 찾아 볼까요?'); setRotation(value => value + 1); };
+  return <div className="sorting-v2"><div className="v2-section-title"><span>🏠 새 놀이 · 재료 집 찾기</span><h2>어디에 넣을까요?</h2><p>시간 제한도 참가비도 없어요. 재료를 알맞은 보관 장소로 보내요!</p></div>{item ? <><div className="sorting-progress">재료 {round + 1}/{items.length} · 한 번에 맞힌 재료 {firstTry}개</div><div className={`sorting-item ${correct ? 'sorting-correct' : ''}`}><IngredientVisual id={item} size={110}/><strong>{INGREDIENTS[item].name}</strong></div><div className="sorting-homes">{homeIds.map(id => <button key={id} disabled={correct} className={correct && INGREDIENTS[item].home === id ? 'correct' : ''} onClick={() => choose(id)}><StorageArt id={id}/><strong>{HOMES[id].name}</strong></button>)}</div><p className="sorting-feedback" role="status">{feedback}</p></> : <div className="sorting-finish"><strong>모든 재료가 집을 찾았어요! 🎉</strong><span>한 번에 맞힌 재료 {firstTry}/{items.length}개 · 최고 기록 {best}개</span><button className="big-primary" onClick={restart}>다시 놀기</button></div>}<button className="subtle-link" onClick={onBack}>재료 받기 놀이로 돌아가기</button></div>;
 }
 
 function Wardrobe({ game, busy, run }: { game: GameState; busy: boolean; run: (command: Command) => Promise<boolean> }) {
