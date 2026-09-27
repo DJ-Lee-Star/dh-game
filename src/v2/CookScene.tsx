@@ -1,23 +1,32 @@
 import type { CookAction, IngredientId, RecipeId } from './content';
 import { IngredientVisual } from './IngredientVisual';
 
+const STATION: Record<CookAction, string> = {
+  crack: 'pan', heat: 'pan', flip: 'pan', sprinkle: 'pan',
+  wash: 'sink', slice: 'board', spread: 'board',
+  stir: 'bowl', pour: 'bowl', stack: 'plate',
+};
+
+function cookingFood(recipeId: RecipeId) {
+  if (recipeId.includes('egg')) return 'egg';
+  if (recipeId.includes('pancake')) return 'pancake';
+  if (recipeId.includes('noodle')) return 'noodle';
+  return 'toast';
+}
+
 export function CookScene({ action, progress, ingredient, recipeId }: { action: CookAction; progress: number; ingredient?: IngredientId; recipeId: RecipeId }) {
-  const p = Math.min(100, Math.max(0, progress));
-  const selected = ingredient && !['oil', 'salt', 'sugar', 'flour'].includes(ingredient) ? ingredient : recipeId.includes('egg') ? 'egg' : recipeId.includes('toast') || recipeId.includes('sandwich') ? 'bread' : recipeId.includes('pancake') ? 'flour' : recipeId.includes('noodle') ? 'noodle' : 'strawberry';
-  const ink = '#845b45';
-  const board = <><rect x="22" y="20" width="196" height="118" rx="17" fill="#d7a776" stroke={ink} strokeWidth="4"/><rect x="34" y="31" width="172" height="95" rx="11" fill="#eec595" stroke="#f8dfb7" strokeWidth="3"/><circle cx="195" cy="118" r="5" fill="#fff1d8"/></>;
-  const pan = <><ellipse cx="113" cy="89" rx="77" ry="49" fill="#494752" stroke="#29282e" strokeWidth="5"/><ellipse cx="113" cy="86" rx="65" ry="38" fill="#77727a" stroke="#a7a1a4" strokeWidth="4"/><path d="M185 88H235" stroke="#554e4a" strokeWidth="16" strokeLinecap="round"/><path d="M190 88H229" stroke="#a18879" strokeWidth="6" strokeLinecap="round"/></>;
-  const basin = <><path d="M25 52H215L199 130H41Z" fill="#afcad0" stroke="#597e87" strokeWidth="4"/><path d="M44 68H196L184 119H56Z" fill="#d8edf0" stroke="#91b7bf" strokeWidth="3"/><path d="M110 57V18Q110 8 123 8H154Q169 8 169 23V35" fill="none" stroke="#829ca4" strokeWidth="12" strokeLinecap="round"/><path d="M154 35H183" stroke="#829ca4" strokeWidth="11" strokeLinecap="round"/></>;
-  const plate = <><ellipse cx="120" cy="105" rx="81" ry="36" fill="#fffdfa" stroke="#c9ac91" strokeWidth="5"/><ellipse cx="120" cy="102" rx="65" ry="26" fill="#f5e8d6"/></>;
-  return <svg className="cook-scene-art" viewBox="0 0 240 150" aria-hidden="true">
-    {action === 'wash' && <>{basin}<g transform={`translate(${78 + p / 10} 67)`}><IngredientVisual id={selected} size={72}/></g>{Array.from({ length: 7 }, (_, i) => <path key={i} d={`M${147 + i * 5} 42v${28 + (i % 3) * 9}`} stroke="#6cc4df" strokeWidth="3" strokeLinecap="round" opacity={p > 0 ? .8 : .32}/>)}</>}
-    {action === 'slice' && <>{board}<g transform="translate(50 48)"><IngredientVisual id={selected} size={70}/></g>{[0, 1, 2].map(i => <ellipse key={i} cx={130 + i * 20} cy="97" rx="12" ry="7" fill="#e6816f" stroke={ink} strokeWidth="2" opacity={p / 100 > (i + 1) / 4 ? 1 : .15}/>)}<g transform={`translate(${p * 1.45} ${Math.sin(p / 7) * 11}) rotate(-18)`}><path d="M18 10H32V93L25 104L18 93Z" fill="#dce1dd" stroke="#596c6b" strokeWidth="3"/><path d="M18 10H32V40H18Z" fill="#b7855e" stroke={ink} strokeWidth="2"/></g></>}
-    {action === 'stir' && <><ellipse cx="120" cy="94" rx="85" ry="38" fill="#c8a784" stroke={ink} strokeWidth="4"/><path d="M36 86Q38 139 120 139Q202 139 204 86" fill="#b77c61" stroke={ink} strokeWidth="4"/><ellipse cx="120" cy="86" rx="76" ry="28" fill={p > 40 ? '#e7c485' : '#f5e6bd'} stroke="#ead1a5" strokeWidth="4"/><path d={`M75 86Q120 ${65 + p / 4} 162 86Q120 110 78 96`} fill="none" stroke="#fff3cf" strokeWidth="6" opacity={p / 110}/><g transform={`rotate(${p * 3.6} 120 87)`}><path d="M120 82L154 22" stroke="#998575" strokeWidth="8" strokeLinecap="round"/><path d="M109 89Q116 110 125 91Q133 110 139 90" fill="none" stroke="#b0a797" strokeWidth="4"/></g></>}
-    {['heat', 'flip', 'crack'].includes(action) && <>{pan}{action === 'crack' ? <><ellipse cx="110" cy="65" rx="28" ry="35" fill="#fff7e5" stroke={ink} strokeWidth="3" transform={`translate(0 ${p / 3})`}/><path d="M93 56L111 68L104 77L129 91" fill="none" stroke={ink} strokeWidth="3" opacity={p / 100}/></> : <g transform={action === 'flip' ? `translate(0 ${-p / 3}) rotate(${p * 1.8} 113 79)` : undefined}><ellipse cx="112" cy="86" rx="47" ry="23" fill={recipeId.includes('egg') ? '#fffdf0' : '#e7b270'} stroke={ink} strokeWidth="3"/><circle cx="112" cy="84" r="13" fill={recipeId.includes('egg') ? '#f3bd4e' : '#f3d293'}/></g>}{action === 'heat' && <><path d="M80 140Q70 122 83 116Q85 124 92 125Q89 112 101 107Q97 124 108 137" fill="#e88455" opacity={p / 100}/><path d="M144 140Q134 122 147 116Q149 125 154 126Q155 112 165 109Q161 126 170 138" fill="#e88455" opacity={p / 100}/></>}</>}
-    {action === 'spread' && <>{board}<path d="M76 62Q75 47 93 50Q120 43 148 52Q163 52 165 68V109H76Z" fill="#b87643" stroke={ink} strokeWidth="4"/><path d="M84 67Q83 56 99 58Q121 50 143 58Q157 58 156 70V99H84Z" fill="#f7ce86"/>
-      <path d={`M91 71Q${95 + p / 4} 58 ${103 + p / 2} 72V${72 + p / 4}H91Z`} fill="#d66072" opacity={p ? 1 : .2}/><g transform={`translate(${p * 1.25} 0)`}><path d="M26 43L63 85" stroke="#aa8567" strokeWidth="9" strokeLinecap="round"/><path d="M53 76L68 90" stroke="#e3d3b9" strokeWidth="11" strokeLinecap="round"/></g></>}
-    {action === 'pour' && <>{plate}<path d="M90 70H153L146 112H97Z" fill="#edf4f2" stroke="#7b9e9d" strokeWidth="4"/><path d="M96 93H147L144 109H99Z" fill="#fbfaf2" opacity={p / 100}/><g transform={`translate(0 ${-p / 6}) rotate(${-p / 4} 80 46)`}><path d="M42 15H95V67H42Z" fill="#f8f7ec" stroke={ink} strokeWidth="3"/><path d="M42 15L54 3H84L95 15Z" fill="#8fc9c7" stroke={ink} strokeWidth="3"/></g>{p > 10 && <path d="M97 60Q93 80 113 91" fill="none" stroke="#fffefa" strokeWidth="8" opacity={p < 100 ? 1 : .3}/>}</>}
-    {action === 'stack' && <>{plate}<path d="M68 87Q65 70 83 70H160Q174 71 171 89V103H68Z" fill="#d99659" stroke={ink} strokeWidth="4"/><path d="M72 85H169" stroke="#f4d57d" strokeWidth="7"/><g transform={`translate(0 ${Math.max(0, 55 - p / 2)})`}><path d="M72 72Q77 59 92 64H152Q167 61 170 75" fill="#f5dc9d" stroke={ink} strokeWidth="3"/></g></>}
-    {action === 'sprinkle' && <>{pan}<ellipse cx="114" cy="87" rx="44" ry="23" fill="#fff9e9"/><circle cx="114" cy="85" r="12" fill="#f1c05d"/><g transform={`translate(${Math.sin(p / 10) * 15} 0)`}><path d="M94 15H145V48H94Z" fill="#f2eee8" stroke={ink} strokeWidth="3"/><path d="M92 8H147V19H92Z" fill="#96c4b6" stroke={ink} strokeWidth="3"/></g>{[0,1,2,3,4].map(i => <circle key={i} cx={93+i*11} cy={57+i%2*10} r="2.5" fill="#fff" opacity={p/100}/>)}</>}
-  </svg>;
+  const selected: IngredientId = ingredient && !['oil', 'salt', 'sugar', 'flour'].includes(ingredient) ? ingredient : recipeId.includes('egg') ? 'egg' : 'bread';
+  const paintedIngredient = ['banana', 'tomato', 'strawberry', 'lettuce'].includes(selected);
+  const sprite = cookingFood(recipeId);
+  const showFood = ['heat', 'flip', 'sprinkle', 'spread', 'stack'].includes(action) || (action === 'crack' && progress > 0);
+  return <div className={`cook-scene-art scene-${action}`} aria-hidden="true">
+    <img className="cook-station" src={`/game/station-${STATION[action]}-v3.webp`} alt="" draggable={false}/>
+    {showFood && <img className="cook-scene-food" src={`/game/cook-${sprite}-v3.webp`} alt="" draggable={false} style={{ rotate: action === 'flip' ? `${progress * 1.2}deg` : undefined, marginTop: action === 'flip' ? `${-progress / 5}px` : undefined }}/>}
+    {['wash', 'slice'].includes(action) && <div className="cook-scene-ingredient">{paintedIngredient ? <img src={`/game/ingredient-${selected}-v3.webp`} alt="" draggable={false}/> : <IngredientVisual id={selected} size={76}/>}</div>}
+    {action === 'wash' && <div className="cook-water" style={{ opacity: progress > 0 ? 1 : .45 }}><i/><i/><i/><i/></div>}
+    {action === 'stir' && <div className="cook-mix" style={{ transform: `rotate(${progress * 3.6}deg)` }}><span/></div>}
+    {action === 'pour' && <div className="cook-pour" style={{ opacity: progress / 100 }}/>}
+    {action === 'heat' && <div className="cook-heat-glow" style={{ opacity: progress / 100 }}/>}
+    {action === 'sprinkle' && <div className="cook-sprinkles" style={{ opacity: progress / 100 }}>✦ · ✧ · ✦</div>}
+  </div>;
 }

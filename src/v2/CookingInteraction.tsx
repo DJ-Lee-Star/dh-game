@@ -23,7 +23,9 @@ const SETUP: Record<CookAction, Setup> = {
 };
 
 function ToolArt({ action, ingredient }: { action: CookAction; ingredient?: IngredientId }) {
-  if (action === 'crack' || action === 'wash' || action === 'stack') return <IngredientVisual id={ingredient ?? 'egg'} size={51}/>;
+  if (action === 'crack') return <img className="cook-tool-ingredient" src="/game/ingredient-egg-v3.webp" alt="" draggable={false}/>;
+  if (action === 'wash' && ingredient && ['tomato', 'strawberry', 'lettuce'].includes(ingredient)) return <img className="cook-tool-ingredient" src={`/game/ingredient-${ingredient}-v3.webp`} alt="" draggable={false}/>;
+  if (action === 'wash' || action === 'stack') return <IngredientVisual id={ingredient ?? 'egg'} size={51}/>;
   return <svg viewBox="0 0 70 70" width="55" height="55" role="img" aria-label={SETUP[action].tool}>
     <defs><linearGradient id="steel" x2="0" y2="1"><stop stopColor="#fffaf0"/><stop offset="1" stopColor="#9dadb0"/></linearGradient><linearGradient id="wood" x2="0" y2="1"><stop stopColor="#deb582"/><stop offset="1" stopColor="#9a6748"/></linearGradient></defs>
     {action === 'slice' && <><path d="M22 8H42V35L36 57Q29 62 22 50Z" fill="url(#steel)" stroke="#586872" strokeWidth="3"/><path d="M23 6H42V29H23Z" fill="url(#wood)" stroke="#80553e" strokeWidth="3"/></>}

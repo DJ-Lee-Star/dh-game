@@ -3,7 +3,7 @@ import { mkdirSync, readdirSync } from 'node:fs';
 import { INGREDIENTS, RECIPES, RECIPE_IDS } from '../src/v2/content';
 import type { IngredientId, RecipeId } from '../src/v2/content';
 
-const shots = 'docs/qa-v2-followup';
+const shots = process.env.NYANG_E2E_SHOTS || 'test-results/qa-v2-followup';
 mkdirSync(shots, { recursive: true });
 const seenCookActions = new Set<string>();
 
@@ -65,7 +65,9 @@ async function cookEgg(page: Page) {
   await page.locator('.storage-inside button').filter({ hasText: '식용유' }).click();
   await gesture(page);
   await page.getByRole('button', { name: /접시 꾸미기로/ }).click();
-  await page.locator('.plating-plate').click();
+  await expect(page.getByRole('button', { name: /이 접시로 완성하기/ })).toBeEnabled();
+  await page.locator('.plating-plate img').evaluate((image: HTMLImageElement) => image.decode());
+  await page.locator('.plating-v2').screenshot({ path: `${shots}/08-plating-egg.png` });
   await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
   await expect(page.getByText('Lv.2')).toBeVisible();
 }
@@ -117,7 +119,7 @@ async function cookRecipeUI(page: Page, recipeId: RecipeId) {
     await gesture(page);
     await page.getByRole('button', { name: index + 1 < RECIPES[recipeId].stages.length ? /다음 조리 단계로/ : /접시 꾸미기로/ }).click();
   }
-  await page.locator('.plating-plate').click();
+  await expect(page.getByRole('button', { name: /이 접시로 완성하기/ })).toBeEnabled();
   await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
   await expect(page.locator('.ready-dish strong')).toHaveText(RECIPES[recipeId].name);
 }

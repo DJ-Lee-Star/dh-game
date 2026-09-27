@@ -1,41 +1,31 @@
 import type { RecipeId } from './content';
-import type { HeldDish } from './engine';
+import type { HeldDish, ShapeId, ToppingId } from './engine';
+
+function ShapeGarnish({ shape }: { shape: ShapeId }) {
+  return <svg className="food-shape" viewBox="0 0 64 64" aria-hidden="true">
+    <defs>
+      <linearGradient id="garnish-pink" x1="0" y1="0" x2=".7" y2="1"><stop stopColor="#ffb8be"/><stop offset=".55" stopColor="#ed697f"/><stop offset="1" stopColor="#bf405f"/></linearGradient>
+      <linearGradient id="garnish-gold" x1="0" y1="0" x2=".7" y2="1"><stop stopColor="#fff1b5"/><stop offset=".65" stopColor="#f4b950"/><stop offset="1" stopColor="#d58e39"/></linearGradient>
+    </defs>
+    <ellipse cx="33" cy="54" rx="21" ry="6" fill="#73504c" opacity=".22"/>
+    {shape === 'heart' && <><path d="M32 51C19 41 8 33 8 22C8 12 18 8 26 13C29 15 31 18 32 19C33 18 35 15 38 13C46 8 56 12 56 22C56 33 45 41 32 51Z" fill="#fff5e8" stroke="#89564c" strokeWidth="3"/><path d="M32 46C21 38 13 31 13 22C13 16 19 13 25 17C29 19 31 23 32 25C33 23 35 19 39 17C45 13 51 16 51 22C51 31 43 38 32 46Z" fill="url(#garnish-pink)"/><path d="M18 22C19 18 23 17 27 20" fill="none" stroke="#ffe6e5" strokeWidth="3" strokeLinecap="round"/><circle cx="44" cy="27" r="2" fill="#ffd6d9"/></>}
+    {shape === 'star' && <><path d="M32 7L39 21L55 23L43 35L46 52L32 44L18 52L21 35L9 23L25 21Z" fill="#fff5e8" stroke="#89564c" strokeWidth="3" strokeLinejoin="round"/><path d="M32 13L37 25L49 26L40 35L42 46L32 40L22 46L24 35L15 26L27 25Z" fill="url(#garnish-gold)"/><path d="M28 23L32 16" stroke="#fff9d9" strokeWidth="3" strokeLinecap="round"/></>}
+    {shape === 'smile' && <><circle cx="32" cy="30" r="23" fill="#fff5e8" stroke="#89564c" strokeWidth="3"/><circle cx="32" cy="30" r="18" fill="url(#garnish-gold)"/><circle cx="25" cy="26" r="2.5" fill="#6d433e"/><circle cx="39" cy="26" r="2.5" fill="#6d433e"/><path d="M24 33Q32 43 40 33" fill="none" stroke="#6d433e" strokeWidth="3" strokeLinecap="round"/><ellipse cx="19" cy="33" rx="3" ry="2" fill="#ed8d85"/><ellipse cx="45" cy="33" rx="3" ry="2" fill="#ed8d85"/></>}
+  </svg>;
+}
+
+function ToppingGarnish({ topping }: { topping: ToppingId }) {
+  return <svg className="food-topping" viewBox="0 0 64 64" aria-hidden="true">
+    {topping === 'none' && <><path d="M32 5L37 25L57 32L37 37L32 57L26 37L7 32L26 25Z" fill="#fff1b4" stroke="#b8844e" strokeWidth="2"/><circle cx="48" cy="12" r="4" fill="#fff9d9"/><circle cx="11" cy="49" r="3" fill="#fff9d9"/></>}
+    {topping === 'jam' && <><path d="M13 37C12 21 24 11 38 13C50 15 56 26 50 39C44 51 23 54 16 45Z" fill="#ad3656" stroke="#783d45" strokeWidth="3"/><path d="M17 32C20 19 30 16 39 18" fill="none" stroke="#f899ab" strokeWidth="5" strokeLinecap="round"/><circle cx="43" cy="38" r="4" fill="#e96d85"/></>}
+    {topping === 'banana' && <><ellipse cx="29" cy="33" rx="20" ry="14" transform="rotate(-24 29 33)" fill="#f6df93" stroke="#9f743e" strokeWidth="3"/><ellipse cx="29" cy="33" rx="14" ry="9" transform="rotate(-24 29 33)" fill="#fff3bd"/><circle cx="28" cy="32" r="2" fill="#ba8b49"/><circle cx="37" cy="27" r="2" fill="#ba8b49"/><circle cx="23" cy="38" r="2" fill="#ba8b49"/></>}
+    {topping === 'strawberry' && <><path d="M17 24C19 15 29 13 34 18C41 13 50 18 49 27C48 41 35 53 32 54C28 53 16 40 17 24Z" fill="#e75962" stroke="#8f4644" strokeWidth="3"/><path d="M21 17L30 21L34 11L39 21L48 17L40 27L31 24L23 27Z" fill="#6da96e" stroke="#456d4d" strokeWidth="2"/>{[[26,31],[38,32],[31,42],[43,39]].map(([x,y]) => <ellipse key={`${x}-${y}`} cx={x} cy={y} rx="1.5" ry="2.5" fill="#ffe8ad"/>)}</>}
+  </svg>;
+}
 
 export function FoodArt({ id, size = 96, dish }: { id: RecipeId; size?: number; dish?: HeldDish | null }) {
-  const toast = ['jam_toast', 'banana_toast', 'cheese_toast', 'flower_sandwich', 'butter_toast'].includes(id);
-  const egg = ['fried_egg', 'salted_egg', 'tomato_egg'].includes(id);
-  const drink = ['cocoa_milk', 'strawberry_smoothie'].includes(id);
-  const pancake = ['pancake', 'berry_pancake'].includes(id);
-  const yogurt = id === 'fruit_yogurt';
-  const noodle = id === 'cozy_noodle';
-  return <svg width={size} height={size} viewBox="0 0 140 140" role="img" aria-label={id} className="food-art">
-    <defs>
-      <radialGradient id="food-plate" cx="38%" cy="28%"><stop stopColor="#fffef7"/><stop offset=".68" stopColor="#fff9ec"/><stop offset="1" stopColor="#dcb995"/></radialGradient>
-      <linearGradient id="food-toast" x2=".15" y2="1"><stop stopColor="#f5d696"/><stop offset=".6" stopColor="#d99556"/><stop offset="1" stopColor="#a96337"/></linearGradient>
-      <radialGradient id="food-egg" cx="37%" cy="34%"><stop stopColor="#fffefa"/><stop offset=".72" stopColor="#fff8e7"/><stop offset="1" stopColor="#dcc9a9"/></radialGradient>
-      <radialGradient id="food-yolk" cx="35%" cy="28%"><stop stopColor="#ffe68e"/><stop offset=".66" stopColor="#f7bc4c"/><stop offset="1" stopColor="#e09336"/></radialGradient>
-      <linearGradient id="food-pancake" x2="0" y2="1"><stop stopColor="#f8d38d"/><stop offset=".65" stopColor="#e6aa61"/><stop offset="1" stopColor="#b87541"/></linearGradient>
-    </defs>
-    <ellipse cx="70" cy="117" rx="58" ry="14" fill="#b58a6e" opacity=".22"/>
-    <ellipse cx="70" cy="103" rx="59" ry="28" fill="url(#food-plate)" stroke="#855d4b" strokeWidth="4"/>
-    <ellipse cx="70" cy="102" rx="49" ry="20" fill="#fffaf0" stroke="#e4c8a6" strokeWidth="2"/>
-    <path d="M28 107Q70 122 112 107" fill="none" stroke="#fff" strokeWidth="2" opacity=".75"/>
-    {toast && <><path d="M30 91Q25 63 46 62Q69 52 94 62Q114 66 109 92L100 110H40Z" fill="url(#food-toast)" stroke="#754b35" strokeWidth="4"/><path d="M41 89Q38 71 53 71Q70 64 87 71Q102 70 99 91L94 101H47Z" fill="#f4c87c"/><path d="M45 77Q69 65 94 76" fill="none" stroke="#fff0bc" strokeWidth="2" opacity=".75"/>
-      {(id === 'jam_toast' || id === 'banana_toast') && <path d="M46 83Q69 73 94 83L90 94Q69 88 48 94Z" fill="#d65d72"/>}
-      {id === 'banana_toast' && <><circle cx="55" cy="84" r="8" fill="#fff0b6" stroke="#d6b16c" strokeWidth="2"/><circle cx="77" cy="88" r="8" fill="#fff0b6" stroke="#d6b16c" strokeWidth="2"/></>}
-      {(id === 'cheese_toast' || id === 'flower_sandwich') && <path d="M45 77L94 76L87 97L74 91L61 101L50 91Z" fill="#f9d45a" stroke="#d8993e" strokeWidth="2"/>}
-      {id === 'butter_toast' && <><path d="M43 82Q70 74 95 83" fill="none" stroke="#f2d779" strokeWidth="6" strokeLinecap="round"/><rect x="62" y="73" width="25" height="15" rx="4" fill="#fff0aa" stroke="#e7bf5e" strokeWidth="2"/><circle cx="51" cy="94" r="2" fill="#fff4cb"/><circle cx="93" cy="91" r="2" fill="#fff4cb"/></>}
-      {id === 'flower_sandwich' && <><path d="M43 90Q67 70 98 91" fill="none" stroke="#6ea471" strokeWidth="8"/><circle cx="72" cy="81" r="6" fill="#e76e5f"/></>}
-    </>}
-    {egg && <><path d="M27 87Q31 68 50 69Q61 56 78 67Q104 59 111 83Q117 102 93 110Q65 118 51 106Q31 109 27 87Z" fill="url(#food-egg)" stroke="#aa805f" strokeWidth="3"/><circle cx="70" cy="87" r="18" fill="url(#food-yolk)" stroke="#e69b38" strokeWidth="3"/><ellipse cx="64" cy="81" rx="6" ry="3" fill="#ffeba9"/><path d="M35 87Q42 76 51 79M87 105Q103 102 106 91" fill="none" stroke="#fff" strokeWidth="3" opacity=".75"/>
-      {id === 'tomato_egg' && <><circle cx="42" cy="88" r="7" fill="#dc6458"/><circle cx="97" cy="92" r="7" fill="#dc6458"/></>}{id === 'salted_egg' && <><circle cx="44" cy="81" r="2" fill="#9fb485"/><circle cx="98" cy="94" r="2" fill="#9fb485"/></>}
-    </>}
-    {pancake && <><ellipse cx="70" cy="101" rx="39" ry="10" fill="#d38b4c" stroke="#8e5d38" strokeWidth="3"/><ellipse cx="70" cy="91" rx="39" ry="10" fill="url(#food-pancake)" stroke="#8e5d38" strokeWidth="3"/><ellipse cx="70" cy="81" rx="38" ry="10" fill="#d99252" stroke="#8e5d38" strokeWidth="3"/><ellipse cx="70" cy="72" rx="38" ry="11" fill="url(#food-pancake)" stroke="#8e5d38" strokeWidth="3"/><path d="M58 70L73 66L84 74L69 79Z" fill="#ffe68e"/><path d="M40 72Q70 59 101 72" fill="none" stroke="#fff0bf" strokeWidth="2" opacity=".7"/>{id === 'berry_pancake' && <><circle cx="53" cy="67" r="7" fill="#da5870"/><circle cx="82" cy="63" r="7" fill="#da5870"/></>}</>}
-    {(drink || yogurt) && <><path d="M45 52H95L90 108Q70 117 50 108Z" fill={id === 'cocoa_milk' ? '#a67052' : id === 'strawberry_smoothie' ? '#ee9caf' : '#fff7e8'} stroke="#855d4b" strokeWidth="4"/><ellipse cx="70" cy="52" rx="25" ry="8" fill={id === 'cocoa_milk' ? '#c08a68' : id === 'strawberry_smoothie' ? '#f3b7c2' : '#fffef7'} stroke="#855d4b" strokeWidth="3"/>{id === 'fruit_yogurt' && <><circle cx="56" cy="58" r="6" fill="#f4dc8c"/><circle cx="79" cy="61" r="6" fill="#f4dc8c"/></>}{id === 'strawberry_smoothie' && <path d="M78 52L89 30" stroke="#e6c08d" strokeWidth="5"/>}</>}
-    {noodle && <><path d="M31 78H109L99 108Q70 119 41 108Z" fill="#e65f55" stroke="#855d4b" strokeWidth="4"/><ellipse cx="70" cy="78" rx="39" ry="13" fill="#f6c977" stroke="#855d4b" strokeWidth="3"/><path d="M43 76Q49 66 57 76T72 76T87 76T99 77" fill="none" stroke="#e9a648" strokeWidth="5"/><path d="M48 59Q42 50 51 41M69 56Q61 46 70 36M89 58Q82 48 90 39" fill="none" stroke="#d4ba9f" strokeWidth="3" strokeLinecap="round"/></>}
-    {dish?.topping === 'strawberry' && <circle cx="91" cy="69" r="9" fill="#d9576b" stroke="#fff0db" strokeWidth="2"/>}
-    {dish?.topping === 'banana' && <circle cx="91" cy="69" r="9" fill="#f4de8d" stroke="#fff0db" strokeWidth="2"/>}
-    {dish?.topping === 'jam' && <path d="M76 69Q91 57 100 72Q86 74 77 82Z" fill="#c75468"/>}
-    {dish && <text x="39" y="64" fontSize="17" fill="#ed7c8b">{dish.shape === 'heart' ? '♥' : dish.shape === 'star' ? '★' : '☺'}</text>}
-  </svg>;
+  return <span className="food-art" style={{ width: size, height: size }} role="img" aria-label={id.replaceAll('_', ' ')}>
+    <img src={`/game/food-${id.replaceAll('_', '-')}-v3.webp`} alt="" draggable={false} loading="lazy" decoding="async"/>
+    {dish && <><ShapeGarnish shape={dish.shape}/><ToppingGarnish topping={dish.topping}/></>}
+  </span>;
 }

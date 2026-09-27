@@ -118,3 +118,44 @@
 .door-icon svg{filter:drop-shadow(0 3px 2px #684f4066)}
 .placed-topping{display:grid;place-items:center}
 .food-art{filter:drop-shadow(0 3px 3px #7955394d)}
+
+/* Painted cooking stations and plated dish preview. */
+.cook-board{background:#fffaf1;border-color:#ecd6bd}
+.step-visual{height:82px;display:flex;align-items:center;justify-content:center;gap:12px;padding:5px 14px;background:linear-gradient(110deg,#fff9ed,#f7e9d5);border:1px solid #efddc7}
+.step-visual .food-art{flex:none}
+.step-preview-copy{display:flex;flex-direction:column;min-width:0;color:#795b47}
+.step-preview-copy small{font-size:10px;font-weight:800;color:#b48168}
+.step-preview-copy strong{font-size:15px;line-height:1.25}
+.step-preview-copy span{font-size:11px;line-height:1.25}
+.direct-cook{height:284px;background:linear-gradient(#fff8ee80,#fff8ee42),url('/game/bg-kitchen.webp') center 66%/cover;border-color:#e7c9aa;box-shadow:inset 0 0 0 3px #fff7ea88}
+.direct-cook.ready{background:linear-gradient(#fff8ee66,#fff8ee25),url('/game/bg-kitchen.webp') center 66%/cover}
+.direct-cook .cook-scene-art{width:100%;height:100%;opacity:1;filter:drop-shadow(0 7px 5px #5a3c3359)}
+.cook-station{position:absolute;left:50%;top:49%;width:270px;height:270px;max-width:92%;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none}
+.cook-scene-food{position:absolute;left:45%;top:45%;width:91px;height:91px;object-fit:contain;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 2px #553e396b);transition:rotate .2s,margin-top .2s}
+.scene-spread .cook-scene-food,.scene-stack .cook-scene-food{left:49%;top:52%;width:112px;height:112px}
+.scene-sprinkle .cook-scene-food{left:44%;top:47%}
+.cook-scene-ingredient{position:absolute;left:47%;top:47%;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 3px #6b4a3f66)}
+.scene-wash .cook-scene-ingredient{top:53%}
+.scene-slice .cook-scene-ingredient{left:50%;top:53%}
+.scene-crack .cook-scene-ingredient{left:45%;top:35%}
+.cook-water{position:absolute;left:53%;top:28%;height:55px;display:flex;gap:6px;pointer-events:none}
+.cook-water i{width:3px;background:linear-gradient(#bbf4ff,#62bdd4aa,transparent);border-radius:5px;transform:rotate(5deg)}
+.cook-water i:nth-child(2){height:43px}.cook-water i:nth-child(3){height:51px}.cook-water i:nth-child(4){height:36px}
+.cook-mix{position:absolute;left:44%;top:41%;width:72px;height:56px;border:7px solid #f6d28c;border-radius:50%;transform-origin:center;opacity:.9}
+.cook-mix span{display:block;width:70%;height:45%;margin:11px auto;border:5px solid #fff1d0;border-radius:50%}
+.cook-pour{position:absolute;left:43%;top:47%;width:75px;height:35px;background:#fff9e8;border-radius:50%;box-shadow:inset 0 0 0 7px #efceb7}
+.cook-heat-glow{position:absolute;left:35%;top:75%;width:85px;height:22px;border-radius:50%;background:#ffb548;filter:blur(12px)}
+.cook-sprinkles{position:absolute;left:40%;top:30%;color:#fff1a8;text-shadow:0 2px 4px #a67133;font-size:26px}
+.direct-cook .cook-target{border-color:#fff9ecba;box-shadow:0 0 0 2px #b9796b88,0 2px 7px #593d3459}
+.direct-cook .cook-target span{background:#fff9e9ef}
+.direct-cook .cook-tool{background:linear-gradient(135deg,#fffdf5,#f5deb8);border-color:#9f7152!important;box-shadow:0 5px 10px #51362780}
+.plating-plate{height:310px;border-radius:20px;background:radial-gradient(ellipse at 50% 65%,#fff8edb8,transparent 65%),url('/game/bg-kitchen.webp') center 77%/cover;border:2px solid #ead2b8;box-shadow:inset 0 0 0 4px #fffbf187,0 6px 11px #8e624c33}
+.plating-plate .food-art{filter:drop-shadow(0 12px 7px #6e473e66)}
+.food-art{display:block;object-fit:contain}
+.food-art{position:relative;display:inline-block;vertical-align:middle;flex:none}
+.food-art>img{display:block;width:100%;height:100%;object-fit:contain}
+.food-shape,.food-topping{position:absolute;pointer-events:none;filter:drop-shadow(0 2px 2px #69493966)}
+.food-shape{width:22%;height:22%;left:8%;bottom:13%}
+.food-topping{width:18%;height:18%;right:10%;top:15%}
+.cook-scene-ingredient img{display:block;width:94px;height:94px;object-fit:contain}
+.direct-cook .cook-tool img{display:block;width:51px;height:51px;object-fit:contain;pointer-events:none}
