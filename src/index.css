@@ -1,6 +1,6 @@
 :root{font-family:'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;color:#4f382f;background:#e7dac8;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
-html,body,#root{margin:0;min-width:320px;min-height:100%;width:100%}
+html,body,#root{margin:0;min-width:0;min-height:100%;width:100%}
 body{overflow:hidden}
 button{font:inherit;cursor:pointer}
 button:disabled{cursor:not-allowed}

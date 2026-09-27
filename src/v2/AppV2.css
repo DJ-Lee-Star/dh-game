@@ -130,6 +130,7 @@
 .direct-cook{height:284px;background:linear-gradient(#fff8ee80,#fff8ee42),url('/game/bg-kitchen.webp') center 66%/cover;border-color:#e7c9aa;box-shadow:inset 0 0 0 3px #fff7ea88}
 .direct-cook.ready{background:linear-gradient(#fff8ee66,#fff8ee25),url('/game/bg-kitchen.webp') center 66%/cover}
 .direct-cook .cook-scene-art{width:100%;height:100%;opacity:1;filter:drop-shadow(0 7px 5px #5a3c3359)}
+.direct-cook .cook-station{height:min(100%,270px)}
 .cook-station{position:absolute;left:50%;top:49%;width:270px;height:270px;max-width:92%;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none}
 .cook-scene-food{position:absolute;left:45%;top:45%;width:91px;height:91px;object-fit:contain;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 2px #553e396b);transition:rotate .2s,margin-top .2s}
 .scene-spread .cook-scene-food,.scene-stack .cook-scene-food{left:49%;top:52%;width:112px;height:112px}
@@ -173,9 +174,10 @@
 .kitchen-play .direct-cook{flex:1;min-height:0;height:auto}
 .kitchen-play .cook-meter{flex:none;margin:5px 0 3px;height:8px}
 .kitchen-play .easy-cook{flex:none;min-height:25px}
-.kitchen-play .easy-cook{position:absolute;right:22px;bottom:79px;z-index:6;background:#fff8e9e8;border-radius:8px;padding:3px 7px;font-weight:850}
-.kitchen-play .tap-cook{position:absolute;left:22px;bottom:79px;z-index:6;background:#fff8e9e8;border-radius:8px;padding:5px 7px;font-size:11px;font-weight:850;color:#9a5e52}
-.kitchen-play .storage-area{position:absolute;top:110px;left:17px;right:17px;padding:0;z-index:5}
+.kitchen-play .easy-cook{position:static;right:auto;bottom:auto;z-index:auto;background:#fff8e9;border-radius:8px;padding:3px 7px;font-weight:850;margin:3px auto 0}
+.kitchen-play .easy-cook:disabled{display:none}
+.kitchen-play .tap-cook{display:none}
+.kitchen-play .storage-area{position:relative;top:auto;left:auto;right:auto;flex:none;margin:0 8px 2px;padding:0;z-index:5}
 .kitchen-play .storage-area h3{display:none}
 .kitchen-play .storage-doors{gap:5px}
 .kitchen-play .storage-door{min-height:45px;padding:3px 2px;gap:2px;border-radius:10px;flex-direction:row;background:#f7e6cde8;box-shadow:0 3px 6px #5b3c2b55;backdrop-filter:blur(5px)}
@@ -185,10 +187,18 @@
 .kitchen-play .storage-door .door-icon svg{width:29px;height:29px}
 .kitchen-play .storage-door strong{font-size:10px}
 .kitchen-play .storage-door small{display:none}
-.kitchen-play .storage-inside{position:absolute;left:0;right:0;top:48px;max-height:min(39dvh,240px);overflow:auto;margin:0;box-shadow:0 10px 20px #513d3199;background:#fff9ee;z-index:7}
+.kitchen-play .storage-inside{position:static;max-height:none;overflow:auto;margin:5px 0;box-shadow:none;background:#fff9ee;z-index:7}
+.kitchen-play:has(.storage-inside) .cook-board{display:none}
+.kitchen-play:has(.storage-inside) .storage-area{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;padding:6px;background:linear-gradient(#fff9ee,#f3ddbe);border:2px solid #e4c8a6;border-radius:15px}
+.kitchen-play:has(.storage-inside) .storage-inside{flex:1;min-height:0}
+.kitchen-play:has(.storage-inside) .kitchen-hint{display:none}
+.quick-ingredient{width:100%;min-height:43px;display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 4px;border:2px solid #d66c70!important;border-radius:12px;background:#ffedda;color:#914f43!important;box-shadow:0 3px 0 #d9a19a;font-weight:900;font-size:14px}
+.quick-ingredient svg,.quick-ingredient img{max-width:35px;max-height:35px}
+.quick-ingredient span:last-child{font-size:20px;margin-left:auto;padding-right:10px}
 .kitchen-play .storage-inside button{min-height:65px}
 .kitchen-play .kitchen-hint{position:absolute;bottom:38px;left:17px;right:17px;z-index:3;margin:0;padding:5px 8px;background:#fff8e9de;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;pointer-events:none}
-.kitchen-play>.big-primary{position:absolute;bottom:42px;left:13px;z-index:4;width:calc(100% - 26px);margin:0;min-height:46px}
+.kitchen-play>.big-primary{position:static;z-index:4;width:calc(100% - 16px);margin:0 8px 8px;min-height:46px}
+.kitchen-play:has(>.big-primary) .storage-area{display:none}
 .kitchen-play:has(>.big-primary) .kitchen-hint,.kitchen-play:has(>.big-primary) .easy-cook,.kitchen-play:has(>.big-primary) .tap-cook{display:none}
 .kitchen-play>.big-primary+.subtle-link{display:none}
 .kitchen-play>.subtle-link{flex:none;min-height:30px;margin:0 auto;padding:4px;font-size:11px}
@@ -229,7 +239,7 @@
 @keyframes cook-vertical-guide{0%,15%{left:var(--from-x);top:var(--from-y);opacity:.25}45%{left:var(--to-x);top:calc(var(--to-y) - 8%);opacity:1}70%,100%{left:var(--to-x);top:calc(var(--to-y) + 8%)}}
 @keyframes cook-horizontal-guide{0%,15%{left:var(--from-x);top:var(--from-y);opacity:.25}45%{left:calc(var(--to-x) - 8%);top:var(--to-y);opacity:1}70%,100%{left:calc(var(--to-x) + 8%);top:var(--to-y)}}
 @media(prefers-reduced-motion:reduce){.gesture-stir .cook-guide-hand,.gesture-slice .cook-guide-hand,.gesture-flip .cook-guide-hand,.gesture-heat .cook-guide-hand,.gesture-wash .cook-guide-hand,.gesture-spread .cook-guide-hand,.gesture-sprinkle .cook-guide-hand{animation:none;left:var(--to-x);top:var(--to-y);opacity:1}}
-@media(max-height:650px){.kitchen-play .cook-heading{min-height:43px}.kitchen-play .storage-area{top:101px}.kitchen-play .kitchen-hint{bottom:31px}.kitchen-play>.big-primary{bottom:36px}.kitchen-play>.subtle-link{min-height:25px}}
+@media(max-height:650px){.kitchen-play .cook-heading{min-height:43px}.kitchen-play .kitchen-hint{bottom:31px}.kitchen-play>.subtle-link{min-height:25px}}
 
 /* Four recipes and six ingredients fit without an inner scrolling list. */
 .v2-main:has(.recipe-select-v2){overflow:hidden}
@@ -328,3 +338,5 @@
 .eating-dish .dish-bite{position:absolute;right:-3px;top:-10px;opacity:0;animation:show-bite 3.5s ease-in forwards;color:#a65f56;font-size:11px;font-weight:900;background:#fff8e5;border-radius:10px;padding:3px 5px;box-shadow:0 2px 3px #62413155}
 @keyframes show-bite{0%,60%{opacity:0;transform:scale(.5)}73%,100%{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.eating-dish,.eating-stage .eater-before,.eating-stage .eater-after,.eating-dish .dish-bite,.bite-spark{animation:none}.eating-dish{transform:translate(77px,4px) scale(.76)}.eating-stage .eater-before{opacity:0}.eating-stage .eater-after{opacity:1}.eating-dish .dish-bite{opacity:1}}
+@media(max-width:319px){.v2-hud{padding-left:5px;padding-right:5px}.v2-brand{gap:3px}.brand-paw{font-size:20px;padding:3px}.v2-brand strong{font-size:15px}.v2-brand small,.v2-status small{display:none}.hud-mini-actions{gap:2px}.hud-mini-actions button{width:31px;height:31px}.hud-mini-actions svg{width:16px;height:16px}.v2-status{gap:4px}.v2-currency{font-size:10px;gap:1px}.v2-currency svg{width:12px;height:12px}.v2-nav button{min-height:48px;font-size:10px}.kitchen-play .storage-door strong{font-size:9px}.quick-ingredient{font-size:12px}.story-progress{gap:3px}.story-progress strong{white-space:normal;text-align:right}}
+@media(max-width:359px){.plating-v2 .choice-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:3px;min-height:0;margin:2px 0}.plating-v2 .choice-row strong{grid-column:1/-1;width:auto;min-width:0;line-height:1}.plating-v2 .choice-row button{min-width:0;min-height:32px;padding:3px 1px;font-size:9px;white-space:normal;line-height:1.05}}
