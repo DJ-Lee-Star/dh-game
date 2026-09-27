@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="930" viewBox="0 0 1200 930">
+  <defs>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#f8e7cf"/><stop offset="1" stop-color="#ebcda5"/></linearGradient>
+    <linearGradient id="wood" x2="0" y2="1"><stop stop-color="#d6ad79"/><stop offset="1" stop-color="#ad7b50"/></linearGradient>
+    <style>text{font-family:'Malgun Gothic','Noto Sans KR',sans-serif;fill:#49382f} .small{font-size:13px} .note{font-size:17px} .label{font-size:15px;font-weight:700} .title{font-size:26px;font-weight:700} .muted{fill:#806e5d} .button{fill:#cf6177} .white{fill:#fff}</style>
+  </defs>
+  <rect width="1200" height="930" fill="#fffaf2"/>
+  <text x="40" y="48" class="title">스크롤 없는 주방 · 공간과 조작 구성 검토안</text>
+  <text x="40" y="78" class="note muted">최종 아트가 아닌 설계 개념도. 배경 물건과 조작 대상이 같은 공간에 놓입니다.</text>
+  <text x="55" y="117" class="label">390 × 844 · 기본 조리 상태</text>
+  <g transform="translate(55 136) scale(.82)">
+    <rect width="390" height="844" rx="23" fill="#fff" stroke="#bba68a" stroke-width="3"/>
+    <path d="M1 56H389V788H1Z" fill="url(#wall)"/>
+    <text x="18" y="35" class="label">← 주방</text><text x="246" y="35" class="small">350 코인 · 설정</text>
+    <rect x="14" y="70" width="362" height="62" rx="13" fill="#fffaf0"/>
+    <text x="28" y="94" class="small">달걀 프라이 · 1/2</text><text x="28" y="118" class="label">달걀을 팬 가장자리에 톡!</text>
+    <rect x="22" y="165" width="88" height="165" rx="12" fill="#a9cfc8" stroke="#638d87" stroke-width="3"/>
+    <path d="M22 229H110M97 189V213M97 250V283" stroke="#638d87" stroke-width="4"/>
+    <text x="38" y="354" class="label">냉장고</text>
+    <rect x="245" y="173" width="123" height="90" rx="8" fill="#ba8a59" stroke="#7c593d" stroke-width="3"/>
+    <path d="M252 218H361" stroke="#f7d8a9" stroke-width="7"/>
+    <rect x="262" y="187" width="27" height="25" rx="4" fill="#f4d196"/>
+    <rect x="311" y="185" width="24" height="29" rx="4" fill="#db8090"/>
+    <text x="271" y="287" class="label">간식 선반</text>
+    <rect x="261" y="327" width="92" height="62" rx="6" fill="#ccab79" stroke="#7c593d" stroke-width="3"/>
+    <path d="M306 329V388" stroke="#7c593d" stroke-width="2"/>
+    <text x="270" y="411" class="small">상온 보관장</text>
+    <path d="M8 446Q195 425 382 446V708H8Z" fill="url(#wood)" stroke="#956744" stroke-width="3"/>
+    <ellipse cx="197" cy="561" rx="112" ry="73" fill="#494952" stroke="#94919b" stroke-width="12"/>
+    <path d="M290 575L363 588" stroke="#5a5350" stroke-width="24" stroke-linecap="round"/>
+    <ellipse cx="149" cy="528" rx="33" ry="27" fill="none" stroke="#f7d185" stroke-width="4" stroke-dasharray="7 5"/>
+    <ellipse cx="75" cy="470" rx="24" ry="31" fill="#fff3d9" stroke="#906c49" stroke-width="3"/>
+    <path d="M98 478Q123 483 140 511" fill="none" stroke="#cf6177" stroke-width="4" stroke-dasharray="5 5"/>
+    <text x="89" y="668" class="label">팬·도구·목표는 같은 좌표</text>
+    <rect x="14" y="721" width="111" height="52" rx="12" fill="#fff5df"/>
+    <text x="36" y="753" class="label">시범 보기</text>
+    <rect x="137" y="721" width="239" height="52" rx="12" class="button"/>
+    <text x="197" y="753" class="label white">다음 단계 →</text>
+    <text x="18" y="821" class="small">식당　　 요리　　 마트　　 놀이　　 꾸미기</text>
+  </g>
+  <text x="423" y="117" class="label">320 × 568 · 재료 선택 상태</text>
+  <g transform="translate(423 136)">
+    <rect width="320" height="568" rx="20" fill="#fff" stroke="#bba68a" stroke-width="3"/>
+    <path d="M1 56H319V512H1Z" fill="url(#wall)"/>
+    <text x="15" y="34" class="label">← 주방</text><text x="208" y="34" class="small">350 코인</text>
+    <rect x="10" y="67" width="300" height="54" rx="10" fill="#fffaf0"/>
+    <text x="22" y="89" class="small">달걀 프라이 · 1/2</text><text x="22" y="111" class="label">냉장고에서 달걀을 골라요</text>
+    <rect x="16" y="137" width="69" height="105" rx="9" fill="#a9cfc8" stroke="#cf6177" stroke-width="4"/>
+    <path d="M16 180H85M73 149V169" stroke="#638d87" stroke-width="3"/>
+    <text x="26" y="264" class="small">냉장고</text>
+    <rect x="216" y="144" width="88" height="65" rx="5" fill="#b78b5c"/><path d="M218 177H302" stroke="#f7d8a9" stroke-width="5"/>
+    <text x="230" y="231" class="small">간식 선반</text>
+    <path d="M5 292Q160 278 315 292V452H5Z" fill="url(#wood)"/>
+    <ellipse cx="159" cy="345" rx="87" ry="47" fill="#514e53" stroke="#92909a" stroke-width="9"/>
+    <rect x="8" y="314" width="304" height="188" rx="15" fill="#fffaf0" stroke="#d9bc95" stroke-width="3"/>
+    <text x="24" y="343" class="label">냉장고 · 지금 필요한 재료</text>
+    <rect x="22" y="355" width="126" height="90" rx="12" fill="#e9f3d9" stroke="#829c66" stroke-width="2"/>
+    <ellipse cx="85" cy="385" rx="15" ry="20" fill="#fff3d9" stroke="#906c49" stroke-width="2"/>
+    <text x="56" y="429" class="label">달걀 3개</text>
+    <rect x="159" y="355" width="140" height="90" rx="12" fill="#f1e8d8"/>
+    <text x="179" y="394" class="label">다른 재료</text><text x="185" y="418" class="small">한 장씩 보기 →</text>
+    <text x="34" y="480" class="small">선택하면 닫히고 조리대로 돌아와요</text>
+    <text x="18" y="546" class="small">식당　　요리　　마트　　놀이　　꾸미기</text>
+  </g>
+  <g transform="translate(785 140)">
+    <text y="0" class="label">① 배경은 장소를 설명</text>
+    <text y="30" class="note">냉장고·선반·보관장이</text><text y="56" class="note">눌러 여는 실제 물건이 됩니다.</text>
+    <text y="115" class="label">② 행동 공간은 넓게</text>
+    <text y="145" class="note">보관소를 열 때만 트레이 표시.</text><text y="171" class="note">선택 뒤 닫아 팬을 가리지 않기.</text>
+    <text y="230" class="label">③ 그림과 판정을 함께</text>
+    <text y="260" class="note">팬 가장자리·도구 끝·목표를</text><text y="286" class="note">하나의 장면 좌표로 계산합니다.</text>
+    <text y="345" class="label">④ 스크롤 대신 단계 전환</text>
+    <text y="375" class="note">요리 선택 → 재료 → 조리 → 장식.</text><text y="401" class="note">각 상태에서 필요한 것만 표시.</text>
+    <text y="460" class="label">⑤ 작은 화면에서는 재배치</text>
+    <text y="490" class="note">손잡이와 주요 터치 영역 48px 이상,</text><text y="516" class="note">도구는 현재 60px 수준 유지 제안.</text><text y="542" class="note">글자·판 전체를 축소하지 않습니다.</text>
+  </g>
+  <rect x="414" y="731" width="745" height="112" rx="16" fill="#f0e6d6"/>
+  <text x="438" y="760" class="label">검수: 페이지를 밀지 않고 한 접시를 완성할 수 있는가?</text>
+  <text x="438" y="790" class="note">320×568 / 390×844 / 430×932 / 태블릿에서 재료 선택·조리·</text>
+  <text x="438" y="816" class="note">도움·다음·취소가 보이고, 마트에 다녀와도 하던 요리가 유지되어야 합니다.</text>
+  <text x="55" y="891" class="small muted">냥냥식당 재미·사용성 검토 · 2026-09-27 · 수치와 배치는 프로토타입에서 확인할 제안값</text>
+</svg>

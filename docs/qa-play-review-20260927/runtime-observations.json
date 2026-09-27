@@ -1,0 +1,35 @@
+{
+  "environment": "Headless Playwright Chromium, mouse input, 390x844; not a child or physical touchscreen test",
+  "events": [
+    {
+      "case": "crack",
+      "progress": "width: 100%;"
+    },
+    {
+      "case": "heat fine movement 560px inside target, increments ~1px",
+      "before": "width: 23.779%;",
+      "after": "width: 23.779%;"
+    },
+    {
+      "case": "heat coarse movement same area, increments 35-70px",
+      "after": "width: 100%;"
+    },
+    {
+      "case": "cart before leaving",
+      "text": "장바구니 1개\n55코인 ▼"
+    },
+    {
+      "case": "cart after return",
+      "text": "장바구니 0개\n0코인 ▼"
+    },
+    {
+      "case": "cooking before mart",
+      "progress": "width: 100%;"
+    },
+    {
+      "case": "cooking after mart",
+      "recipeSelectionVisible": true,
+      "cookingBoards": 0
+    }
+  ]
+}

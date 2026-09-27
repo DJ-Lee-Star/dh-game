@@ -113,7 +113,7 @@ const server = createServer(async (req, res) => {
       const input = await body(req);
       if (!input.command || typeof input.command !== 'object') return error(res, 400, '동작을 다시 확인해 주세요.');
       const command = input.command as Command;
-      const allowed = ['BUY_CART', 'COOK', 'SERVE', 'CLAIM', 'DRAW', 'BUY_COSMETIC', 'EQUIP', 'START_MINIGAME', 'FINISH_MINIGAME', 'ABANDON_MINIGAME', 'RESET'];
+      const allowed = ['BUY_CART', 'RECOVER_INGREDIENT', 'COOK', 'SERVE', 'CLAIM', 'DRAW', 'BUY_COSMETIC', 'EQUIP', 'START_MINIGAME', 'FINISH_MINIGAME', 'ABANDON_MINIGAME', 'SELECT_GOAL', 'CLAIM_GOAL', 'RESET'];
       if (!allowed.includes(command.type)) return error(res, 400, '알 수 없는 동작이에요.');
       const result = mutation(player, String(input.requestId || ''), state => applyCommand(state, command));
       return json(res, 200, result);

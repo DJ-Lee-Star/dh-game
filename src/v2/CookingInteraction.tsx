@@ -62,9 +62,9 @@ export function CookingInteraction({ action, progress, setProgress, ingredient, 
     let amount = 0;
     if (hit) {
       if (['crack', 'pour', 'stack'].includes(action)) amount = state.inside ? 0 : 100;
-      else if (action === 'stir') amount = state.inside ? Math.min(22, Math.abs(Math.atan2(Math.sin(angle - state.angle), Math.cos(angle - state.angle))) * 22) : 0;
-      else if (action === 'slice' || action === 'flip') amount = state.inside && (action === 'slice' ? dy > 2 : dy < -2) ? Math.min(20, Math.abs(dy) * 1.2) : 0;
-      else amount = state.inside && Math.abs(dx) > 2 ? Math.min(20, Math.abs(dx) * 1.1) : 0;
+      else if (action === 'stir') amount = state.inside ? Math.abs(Math.atan2(Math.sin(angle - state.angle), Math.cos(angle - state.angle))) * 22 : 0;
+      else if (action === 'slice' || action === 'flip') amount = state.inside ? (action === 'slice' ? Math.max(0, dy) : Math.max(0, -dy)) * 1.2 : 0;
+      else amount = state.inside ? Math.abs(dx) * 1.1 : 0;
     }
     if (amount > 0) {
       setProgress(value => Math.min(100, value + amount));

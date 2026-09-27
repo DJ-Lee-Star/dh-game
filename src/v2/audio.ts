@@ -3,12 +3,20 @@ const KEY = 'nyang-v2-audio';
 const defaults: AudioSettings = { music: true, musicVolume: 36, effects: true, effectsVolume: 42 };
 type Scene = 'restaurant' | 'mart';
 type Effect = 'tap' | 'slice' | 'stir' | 'catch' | 'cook' | 'serve' | 'reward' | 'error' | 'countdown';
-const notes: Record<string, number> = { C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99 };
+const notes: Record<string, number> = { C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196, A3: 220, B3: 246.94, C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99 };
 const tunes: Record<Scene, (keyof typeof notes | null)[]> = {
   restaurant: ['E4', null, 'G4', 'A4', 'G4', null, 'E4', null, 'D4', null, 'E4', 'G4', 'E4', null, 'C4', null,
-    'E4', null, 'G4', 'C5', 'B4', null, 'A4', null, 'G4', 'E4', 'D4', null, 'C4', null, null, null],
+    'E4', null, 'G4', 'C5', 'B4', null, 'A4', null, 'G4', 'E4', 'D4', null, 'C4', null, null, null,
+    'F4', null, 'A4', 'C5', 'A4', null, 'G4', null, 'E4', 'G4', 'A4', null, 'G4', null, 'E4', null,
+    'D4', null, 'F4', 'A4', 'G4', 'F4', 'E4', null, 'G4', 'E4', 'D4', null, 'C4', null, null, null],
   mart: ['G4', 'B4', 'D5', null, 'B4', 'G4', 'E4', null, 'A4', 'C5', 'E5', null, 'C5', 'A4', 'G4', null,
-    'G4', 'C5', 'D5', 'C5', 'B4', null, 'G4', null, 'A4', 'G4', 'E4', 'G4', 'D4', null, null, null],
+    'G4', 'C5', 'D5', 'C5', 'B4', null, 'G4', null, 'A4', 'G4', 'E4', 'G4', 'D4', null, null, null,
+    'A4', 'C5', 'E5', 'G5', 'E5', 'C5', 'A4', null, 'B4', 'D5', 'G5', 'D5', 'B4', 'G4', 'E4', null,
+    'G4', 'B4', 'D5', 'E5', 'D5', 'B4', 'A4', 'G4', 'C5', 'A4', 'G4', 'E4', 'D4', null, null, null],
+};
+const bass: Record<Scene, (keyof typeof notes)[]> = {
+  restaurant: ['C3', 'A3', 'F3', 'G3', 'C3', 'A3', 'F3', 'G3'],
+  mart: ['G3', 'C3', 'D3', 'G3', 'A3', 'E3', 'G3', 'C3'],
 };
 
 class GameAudio {
@@ -16,11 +24,21 @@ class GameAudio {
   private scene: Scene = 'restaurant';
   private activeScene: Scene | null = null;
   private musicBus: GainNode | null = null;
+  private fallbackBus: GainNode | null = null;
+  private source: AudioBufferSourceNode | null = null;
+  private tracks: Partial<Record<Scene, Promise<AudioBuffer | null>>> = {};
   private timer: number | null = null;
   private nextNote = 0;
   private nextAt = 0;
   private settings: AudioSettings = this.getSettings();
   private lastEffect = 0;
+
+  constructor() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.stopMusic();
+      else if (this.ctx && !this.activeScene) this.startMusic(this.scene);
+    });
+  }
 
   getSettings(): AudioSettings {
     try { const value = JSON.parse(localStorage.getItem(KEY) || '{}'); return { ...defaults, ...value }; }
@@ -42,7 +60,22 @@ class GameAudio {
   }
   stopMusic() {
     if (this.timer !== null) { window.clearInterval(this.timer); this.timer = null; }
-    if (this.ctx && this.musicBus) this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, .07);
+    if (this.fallbackBus) {
+      const oldFallback = this.fallbackBus;
+      this.fallbackBus = null;
+      window.setTimeout(() => oldFallback.disconnect(), 1400);
+    }
+    if (this.source) {
+      const oldSource = this.source;
+      this.source = null;
+      window.setTimeout(() => { try { oldSource.stop(); } catch { /* Already stopped. */ } oldSource.disconnect(); }, 1400);
+    }
+    if (this.ctx && this.musicBus) {
+      const oldBus = this.musicBus;
+      oldBus.gain.setTargetAtTime(0, this.ctx.currentTime, .12);
+      window.setTimeout(() => oldBus.disconnect(), 1400);
+      this.musicBus = null;
+    }
     this.activeScene = null;
   }
   private startMusic(scene: Scene) {
@@ -54,19 +87,45 @@ class GameAudio {
     bus.connect(this.ctx.destination);
     bus.gain.setTargetAtTime(this.settings.music ? this.settings.musicVolume / 100 * .35 : 0, this.ctx.currentTime, .12);
     this.musicBus = bus;
+    const fallbackBus = this.ctx.createGain();
+    fallbackBus.connect(bus);
+    this.fallbackBus = fallbackBus;
     this.nextNote = 0;
     this.nextAt = this.ctx.currentTime + .06;
-    const beat = scene === 'restaurant' ? .36 : .29;
+    const beat = scene === 'restaurant' ? .37 : .3;
     const schedule = () => {
       if (!this.ctx || this.activeScene !== scene) return;
       while (this.nextAt < this.ctx.currentTime + .8) {
         const key = tunes[scene][this.nextNote % tunes[scene].length];
-        if (key) this.pluck(notes[key], this.nextAt, beat * .72, bus, scene === 'mart' ? 'triangle' : 'sine');
-        if (this.nextNote % 4 === 0) this.pluck(notes[scene === 'mart' ? 'C4' : 'C4'] / 2, this.nextAt, beat * 1.7, bus, 'sine', .55);
+        if (key) this.pluck(notes[key], this.nextAt, beat * .73, fallbackBus, scene === 'mart' ? 'triangle' : 'sine', .78);
+        if (this.nextNote % 8 === 0) this.pluck(notes[bass[scene][Math.floor(this.nextNote / 8) % 8]], this.nextAt, beat * 3.3, fallbackBus, 'sine', .43);
+        if (this.nextNote % 8 === 4) this.pluck(notes[bass[scene][Math.floor(this.nextNote / 8) % 8]] * 1.5, this.nextAt, beat * 1.8, fallbackBus, 'triangle', .22);
+        if (scene === 'mart' && this.nextNote % 2 === 1) this.pluck(notes.C5 * 2, this.nextAt, beat * .13, fallbackBus, 'sine', .12);
         this.nextNote += 1; this.nextAt += beat;
       }
     };
     schedule(); this.timer = window.setInterval(schedule, 180);
+    void this.loadTrack(scene).then(buffer => {
+      if (!buffer || !this.ctx || this.musicBus !== bus || this.activeScene !== scene) return;
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer; source.loop = true; source.connect(bus);
+      source.start(); this.source = source;
+      fallbackBus.gain.setTargetAtTime(0, this.ctx.currentTime, .18);
+      if (this.fallbackBus === fallbackBus) this.fallbackBus = null;
+      if (this.timer !== null) { window.clearInterval(this.timer); this.timer = null; }
+      window.setTimeout(() => fallbackBus.disconnect(), 1400);
+    });
+  }
+  private loadTrack(scene: Scene): Promise<AudioBuffer | null> {
+    if (!this.ctx) return Promise.resolve(null);
+    if (!this.tracks[scene]) {
+      const ctx = this.ctx;
+      this.tracks[scene] = fetch(`/game/music-${scene}.mp3`)
+        .then(response => { if (!response.ok) throw new Error('music asset unavailable'); return response.arrayBuffer(); })
+        .then(bytes => ctx.decodeAudioData(bytes))
+        .catch(() => null);
+    }
+    return this.tracks[scene];
   }
   private pluck(frequency: number, when: number, duration: number, destination: AudioNode, type: OscillatorType = 'sine', volume = 1) {
     if (!this.ctx) return;

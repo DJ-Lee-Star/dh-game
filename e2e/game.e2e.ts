@@ -66,6 +66,18 @@ async function cookEgg(page: Page) {
   await gesture(page);
   await page.getByRole('button', { name: /접시 꾸미기로/ }).click();
   await expect(page.getByRole('button', { name: /이 접시로 완성하기/ })).toBeEnabled();
+  await page.getByRole('button', { name: /하트 놓기/ }).click();
+  await page.locator('.plating-plate').click({ position: { x: 225, y: 95 } });
+  for (const [width, height] of [[320, 568], [390, 844], [430, 932], [768, 1024]]) {
+    await page.setViewportSize({ width, height });
+    const fit = await page.evaluate(() => {
+      const main = document.querySelector('.v2-main')!, complete = document.querySelector('.plating-v2>.big-primary')!, nav = document.querySelector('.v2-nav')!;
+      return { scroll: main.scrollHeight, viewport: main.clientHeight, actionBottom: complete.getBoundingClientRect().bottom, navTop: nav.getBoundingClientRect().top };
+    });
+    expect(fit.scroll, `${width}×${height} plating scroll`).toBeLessThanOrEqual(fit.viewport + 1);
+    expect(fit.actionBottom, `${width}×${height} finish action`).toBeLessThanOrEqual(fit.navTop);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.plating-plate img').evaluate((image: HTMLImageElement) => image.decode());
   await page.locator('.plating-v2').screenshot({ path: `${shots}/08-plating-egg.png` });
   await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
@@ -103,13 +115,15 @@ async function importLevelFive(page: Page) {
 }
 async function cookRecipeUI(page: Page, recipeId: RecipeId) {
   await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
-  await page.locator('.recipe-card-v2').nth(RECIPE_IDS.indexOf(recipeId)).click();
+  for (let pageIndex = 0; pageIndex < 4 && await page.locator(`[data-recipe-id="${recipeId}"]`).count() === 0; pageIndex++) await page.getByRole('button', { name: '다음 요리 →' }).click();
+  await page.locator(`[data-recipe-id="${recipeId}"]`).click();
   for (let index = 0; index < RECIPES[recipeId].stages.length; index++) {
     const stage = RECIPES[recipeId].stages[index];
     for (const ingredient of stage.ingredients) {
       const home = INGREDIENTS[ingredient].home;
       const door = page.locator(`.storage-door.${home}`);
       if (!(await door.evaluate(element => element.classList.contains('opened')))) await door.click();
+      for (let storageIndex = 0; storageIndex < 3 && await page.locator('.storage-inside button').filter({ hasText: INGREDIENTS[ingredient].name }).count() === 0; storageIndex++) await page.getByRole('button', { name: '다음 →' }).click();
       await page.locator('.storage-inside button').filter({ hasText: INGREDIENTS[ingredient].name }).first().click();
     }
     if (!seenCookActions.has(stage.action)) {
@@ -130,10 +144,14 @@ test('first play, cooking gestures, serving, persistence and mart cart', async (
   await settleRestaurant(page);
   await page.screenshot({ path: `${shots}/01-first-play.png`, fullPage: true });
   await cookEgg(page);
+  const plated = (await apiState(page)).heldDish;
+  expect(plated?.decorations).toHaveLength(1);
+  expect(plated?.decorations[0].x).toBeGreaterThan(55);
   await expect(page.locator('.ready-dish strong')).toHaveText('노릇 달걀 프라이');
   await page.getByRole('button', { name: /손님에게 서빙하기/ }).click();
   await expect(page.locator('.eating-stage')).toBeVisible();
   await expect(page.locator('.eating-stage .eating-dish')).toBeVisible();
+  await page.getByRole('button', { name: '계속하기' }).click();
   await page.locator('.eating-overlay').waitFor({ state: 'hidden' });
   await page.reload();
   await expect(page.getByText('Lv.2')).toBeVisible();
@@ -142,11 +160,11 @@ test('first play, cooking gestures, serving, persistence and mart cart', async (
   await page.screenshot({ path: `${shots}/02-mart-entry.png`, fullPage: true });
   const money = await page.locator('.v2-currency').first().textContent();
   const cartY = (await page.locator('.cart-summary').boundingBox())?.y;
-  await page.locator('.shelf-product').filter({ hasText: '치즈' }).getByRole('button').click();
+  await page.locator('.shelf-product').filter({ hasText: '치즈' }).click();
   await expect(page.locator('.mart-message')).toContainText('Lv.3에 열려요');
   await expect(page.locator('.cart-summary')).toContainText('0개');
   await page.screenshot({ path: `${shots}/02-mart-locked.png`, fullPage: true });
-  await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  await page.locator('.shelf-product').filter({ hasText: '식빵' }).click();
   expect((await page.locator('.cart-summary').boundingBox())?.y).toBe(cartY);
   expect(await page.locator('.shelf-scroll').evaluate(node => getComputedStyle(node).scrollSnapType)).toBe('none');
   await page.screenshot({ path: `${shots}/02-mart-shelf.png`, fullPage: true });
@@ -158,8 +176,8 @@ test('first play, cooking gestures, serving, persistence and mart cart', async (
   await page.screenshot({ path: `${shots}/02-mart.png`, fullPage: true });
   const shelf = await page.locator('.shelf-scroll').evaluate(node => ({ width: node.scrollWidth, view: node.clientWidth }));
   expect(shelf.width).toBeGreaterThan(shelf.view);
-  for (let i = 0; i < 8; i++) await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
-  await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  for (let i = 0; i < 8; i++) await page.locator('.shelf-product').filter({ hasText: '식빵' }).click();
+  await page.locator('.shelf-product').filter({ hasText: '식빵' }).click();
   await expect(page.locator('.mart-message')).toContainText('코인이 부족해요');
   await expect(page.locator('.cart-summary')).toContainText('8개');
 });
@@ -258,7 +276,7 @@ test('all Lv.1–5 recipes, secrets, family meals and cooking cancellation work 
     await page.locator('.family-choices button').filter({ hasText: familyName }).click();
     await expect(page.locator(`.eating-stage.eater-${family}`)).toBeVisible();
     if (index < 3) await page.screenshot({ path: `${shots}/05-family-${family}-eating.png`, fullPage: true });
-    await page.locator('.eating-overlay').click();
+    await page.getByRole('button', { name: '계속하기' }).click();
   }
   const state = await apiState(page);
   expect(state.discovered).toHaveLength(RECIPE_IDS.length);
@@ -296,7 +314,7 @@ test('special panda, short story reward and wrong order family path survive refr
   await expect(page.getByText('스페셜 손님이 왔어요!')).toBeVisible();
   await expect(page.locator('.customer-figure img')).toHaveAttribute('src', '/game/customer-panda.webp');
   await page.screenshot({ path: `${shots}/06-special-panda.png`, fullPage: true });
-  await page.locator('.story-progress').click();
+  await page.locator('.story-progress').first().click();
   await expect(page.locator('.story-list article').first()).toContainText('스티커 획득');
   await page.getByRole('button', { name: '닫기' }).click();
   const before = await apiState(page);
@@ -307,7 +325,7 @@ test('special panda, short story reward and wrong order family path survive refr
   await page.getByRole('button', { name: '가족에게 대접하기' }).click();
   await page.locator('.family-choices button').filter({ hasText: '동생' }).click();
   await expect(page.locator('.eating-stage.eater-sibling')).toBeVisible();
-  await page.locator('.eating-overlay').click();
+  await page.getByRole('button', { name: '계속하기' }).click();
   expect((await apiState(page)).order.customerId).toBe('panda');
   await apiCommand(page, { type: 'COOK', recipeId: before.order.recipeId, topping: 'none', shape: 'star' });
   const served = await apiCommand(page, { type: 'SERVE', target: 'customer' });
@@ -372,14 +390,20 @@ test('BGM starts after interaction, switches scenes and obeys mute and volume se
   await newGame(page, '음악 셰프');
   const snapshot = () => page.evaluate(async () => {
     const { audio } = await import('/src/v2/audio.ts');
-    const current = audio as unknown as { activeScene: string | null; ctx: AudioContext | null; musicBus: GainNode | null };
-    return { scene: current.activeScene, context: current.ctx?.state ?? null, gain: current.musicBus?.gain.value ?? null };
+    const current = audio as unknown as { activeScene: string | null; ctx: AudioContext | null; musicBus: GainNode | null; source: AudioBufferSourceNode | null };
+    return { scene: current.activeScene, context: current.ctx?.state ?? null, gain: current.musicBus?.gain.value ?? null, duration: current.source?.buffer?.duration ?? 0 };
   });
   expect((await snapshot()).context).toBeNull();
   await page.locator('.v2-nav button').filter({ hasText: '식당' }).click();
   await expect.poll(async () => (await snapshot()).scene).toBe('restaurant');
+  await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(80);
+  await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); (window as unknown as { firstTheme?: unknown }).firstTheme = (audio as unknown as { source: unknown }).source; });
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(80);
+  expect(await page.evaluate(async () => { const { audio } = await import('/src/v2/audio.ts'); return (audio as unknown as { source: unknown }).source === (window as unknown as { firstTheme?: unknown }).firstTheme; })).toBe(true);
   await page.locator('.v2-nav button').filter({ hasText: '마트' }).click();
   await expect.poll(async () => (await snapshot()).scene).toBe('mart');
+  await expect.poll(async () => (await snapshot()).duration).toBeGreaterThan(70);
   await expect.poll(async () => (await snapshot()).gain ?? 0).toBeGreaterThan(.05);
   await page.getByRole('button', { name: '설정' }).click();
   const musicVolume = page.getByRole('slider', { name: '음악 크기' });
@@ -429,7 +453,7 @@ test('all bundled character and background images decode and reduced motion is h
 test('a lost purchase response retries the same request without double charging', async ({ page }) => {
   await newGame(page, '재시도 셰프');
   await page.locator('.v2-nav button').filter({ hasText: '마트' }).click();
-  await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  await page.locator('.shelf-product').filter({ hasText: '식빵' }).click();
   await page.getByRole('button', { name: /장바구니 1개/ }).click();
   let lost = false;
   await page.route('**/api/command', async route => {
@@ -440,8 +464,130 @@ test('a lost purchase response retries the same request without double charging'
   await expect(page.getByRole('button', { name: '같은 요청 다시 확인' })).toBeVisible();
   await page.getByRole('button', { name: '같은 요청 다시 확인' }).click();
   await expect(page.locator('.v2-currency').first()).toContainText('295');
+  await expect(page.locator('.mart-cart-dock')).toContainText('장바구니 0개');
   expect((await apiState(page)).inventory.bread).toBe(1);
   await page.reload();
   expect((await apiState(page)).inventory.bread).toBe(1);
   expect((await apiState(page)).money).toBe(295);
+});
+
+test('a stranded chef receives one egg and can resume cooking', async ({ page }) => {
+  await newGame(page, '다시 시작하는 셰프');
+  for (let index = 0; index < 3; index++) {
+    await apiCommand(page, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'heart' });
+    await apiCommand(page, { type: 'SERVE', target: 'father' });
+  }
+  await apiCommand(page, { type: 'CLAIM', questId: 'cook_2' });
+  for (const id of ['garden_background', 'evening_background', 'mint_outfit']) await apiCommand(page, { type: 'BUY_COSMETIC', id });
+  await apiCommand(page, { type: 'START_MINIGAME' });
+  await apiCommand(page, { type: 'ABANDON_MINIGAME' });
+  await page.reload();
+  expect((await apiState(page)).money).toBe(0);
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await page.getByRole('button', { name: '달걀 1개 받고 프라이 만들기' }).click();
+  await expect(page.locator('.cook-heading')).toContainText('노릇 달걀 프라이');
+  const recovered = await apiState(page);
+  expect(recovered.inventory.egg).toBe(1);
+  expect(recovered.owned).toHaveLength(3);
+  const duplicate = await page.request.post('http://127.0.0.1:5173/api/command', { headers: { Authorization: `Bearer ${await token(page)}` }, data: { command: { type: 'RECOVER_INGREDIENT' }, requestId: crypto.randomUUID() } });
+  expect(duplicate.status()).toBe(400);
+});
+
+test('slow tiny drags progress and cooking and cart drafts survive navigation and refresh', async ({ page }) => {
+  test.setTimeout(100_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await newGame(page, '천천히 셰프');
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await page.locator('.recipe-card-v2').filter({ hasText: '노릇 달걀 프라이' }).click();
+  await page.getByRole('button', { name: /냉장고/ }).click();
+  await page.locator('.storage-inside button').filter({ hasText: '달걀' }).click();
+  await gesture(page);
+  await page.getByRole('button', { name: /다음 조리 단계로/ }).click();
+  await page.getByRole('button', { name: /상온 보관장/ }).click();
+  await page.locator('.storage-inside button').filter({ hasText: '식용유' }).click();
+  const tool = await page.locator('.cook-tool').boundingBox();
+  const target = await page.locator('.cook-target').boundingBox();
+  if (!tool || !target) throw new Error('heat tool or target missing');
+  const centerX = target.x + target.width / 2, centerY = target.y + target.height / 2;
+  await page.mouse.move(tool.x + tool.width / 2, tool.y + tool.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(centerX, centerY, { steps: 12 });
+  for (let index = 0; index < 8; index++) {
+    await page.mouse.move(centerX + (index % 2 ? -22 : 22), centerY, { steps: 44 });
+  }
+  await page.mouse.up();
+  await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 100%/);
+  for (const [width, height] of [[320, 568], [390, 844], [430, 932], [768, 1024]]) {
+    await page.setViewportSize({ width, height });
+    const fit = await page.evaluate(() => {
+      const main = document.querySelector('.v2-main')!, next = document.querySelector('.kitchen-play>.big-primary')!, nav = document.querySelector('.v2-nav')!;
+      return { scroll: main.scrollHeight, viewport: main.clientHeight, actionBottom: next.getBoundingClientRect().bottom, navTop: nav.getBoundingClientRect().top };
+    });
+    expect(fit.scroll, `${width}×${height} cooking scroll`).toBeLessThanOrEqual(fit.viewport + 1);
+    expect(fit.actionBottom, `${width}×${height} next action`).toBeLessThanOrEqual(fit.navTop);
+  }
+  await page.locator('.v2-nav button').filter({ hasText: '마트' }).click();
+  await page.locator('.shelf-product').filter({ hasText: '식빵' }).click();
+  await expect(page.locator('.mart-cart-dock')).toContainText('장바구니 1개');
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await expect(page.locator('.cook-heading')).toContainText('2/2단계');
+  await expect(page.getByRole('button', { name: /접시 꾸미기로/ })).toBeVisible();
+  await page.reload();
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await expect(page.getByRole('button', { name: /접시 꾸미기로/ })).toBeVisible();
+  await page.locator('.v2-nav button').filter({ hasText: '마트' }).click();
+  await expect(page.locator('.mart-cart-dock')).toContainText('장바구니 1개');
+});
+
+test('recipe pages fit small screens, album remakes a saved plate, and practice is free', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await newGame(page, '앨범 셰프');
+  await page.locator('.v2-nav button').filter({ hasText: '요리' }).click();
+  await page.locator('.recipe-select-v2').screenshot({ path: `${shots}/10-recipes-320.png` });
+  for (const [width, height] of [[320, 568], [390, 844], [430, 932], [768, 1024], [1024, 768]]) {
+    await page.setViewportSize({ width, height });
+    const fit = await page.evaluate(() => {
+      const main = document.querySelector('.v2-main')!, cards = document.querySelector('.recipe-cards')!, pages = document.querySelector('.recipe-pages')!, nav = document.querySelector('.v2-nav')!;
+      return { scroll: main.scrollHeight, viewport: main.clientHeight, cardsBottom: cards.getBoundingClientRect().bottom, pagesBottom: pages.getBoundingClientRect().bottom, navTop: nav.getBoundingClientRect().top };
+    });
+    expect(fit.scroll, `${width}×${height} recipe selection scroll`).toBeLessThanOrEqual(fit.viewport + 1);
+    expect(fit.cardsBottom, `${width}×${height} recipe cards`).toBeLessThanOrEqual(fit.navTop);
+    expect(fit.pagesBottom, `${width}×${height} recipe pages`).toBeLessThanOrEqual(fit.navTop);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('.recipe-card-v2')).toHaveCount(4);
+  await page.getByRole('button', { name: '다음 요리 →' }).click();
+  await expect(page.locator('.recipe-card-v2')).toHaveCount(4);
+  await page.getByRole('button', { name: '← 이전 요리' }).click();
+  await page.locator('[data-recipe-id="fried_egg"]').click();
+  await page.getByRole('button', { name: /냉장고/ }).click();
+  for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
+    await page.setViewportSize({ width, height });
+    const fit = await page.evaluate(() => {
+      const tray = document.querySelector('.storage-inside')!, main = document.querySelector('.v2-main')!, nav = document.querySelector('.v2-nav')!;
+      return { trayScroll: tray.scrollHeight, trayHeight: tray.clientHeight, trayBottom: tray.getBoundingClientRect().bottom, mainScroll: main.scrollHeight, mainHeight: main.clientHeight, navTop: nav.getBoundingClientRect().top };
+    });
+    expect(fit.trayScroll, `${width}×${height} ingredient tray`).toBeLessThanOrEqual(fit.trayHeight + 1);
+    expect(fit.mainScroll, `${width}×${height} kitchen`).toBeLessThanOrEqual(fit.mainHeight + 1);
+    expect(fit.trayBottom, `${width}×${height} ingredient tray action`).toBeLessThanOrEqual(fit.navTop);
+  }
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.locator('.kitchen-play').screenshot({ path: `${shots}/10-storage-320.png` });
+  await apiCommand(page, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'star', plateColor: 'mint', name: '별님 프라이', decorations: [{ kind: 'shape', id: 'star', x: 72, y: 32 }] });
+  await apiCommand(page, { type: 'SERVE', target: 'father' });
+  await page.reload();
+  await page.getByRole('button', { name: '접시 앨범' }).click();
+  await expect(page.locator('.album-grid article')).toContainText('별님 프라이');
+  await expect(page.locator('.album-grid article')).toContainText('민트 접시');
+  await page.locator('.v2-modal').screenshot({ path: `${shots}/11-album.png` });
+  await page.getByRole('button', { name: '이 요리 다시 만들기' }).click();
+  await expect(page.locator('.cook-heading')).toContainText('노릇 달걀 프라이');
+  await page.locator('.v2-nav button').filter({ hasText: '놀이' }).click();
+  const money = (await apiState(page)).money;
+  await page.getByRole('button', { name: '무료로 연습하기' }).click();
+  await expect(page.locator('.catch-board')).toBeVisible();
+  await expect(page.locator('.minigame-stats')).toContainText('무료 연습');
+  await page.getByRole('button', { name: '연습 마치기' }).click();
+  await expect(page.getByText(/연습에서 .*개 받았어요/)).toBeVisible();
+  expect((await apiState(page)).money).toBe(money);
 });

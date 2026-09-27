@@ -1,0 +1,59 @@
+{
+  "economyLock": {
+    "money": 0,
+    "xp": 360,
+    "hearts": 3,
+    "inventoryTotal": 0,
+    "heldDish": null,
+    "cookable": [],
+    "claimed": [
+      "cook_2"
+    ],
+    "served": 0
+  },
+  "eightCooks": {
+    "steps": [
+      {
+        "recipeId": "fried_egg",
+        "xp": 120,
+        "level": 2
+      },
+      {
+        "recipeId": "banana_toast",
+        "xp": 270,
+        "level": 2
+      },
+      {
+        "recipeId": "banana_toast",
+        "xp": 420,
+        "level": 3
+      },
+      {
+        "recipeId": "cheese_toast",
+        "xp": 600,
+        "level": 3
+      },
+      {
+        "recipeId": "cheese_toast",
+        "xp": 780,
+        "level": 4
+      },
+      {
+        "recipeId": "pancake",
+        "xp": 1000,
+        "level": 4
+      },
+      {
+        "recipeId": "pancake",
+        "xp": 1220,
+        "level": 4
+      },
+      {
+        "recipeId": "pancake",
+        "xp": 1440,
+        "level": 5
+      }
+    ],
+    "money": 1025
+  }
+}
