@@ -1,0 +1,73 @@
+name: Deploy game
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dh-game-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/dh_game_deploy
+          chmod 600 ~/.ssh/dh_game_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload release
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          set -euo pipefail
+          release_id="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          ssh_options="-i $HOME/.ssh/dh_game_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          ssh $ssh_options "$SSH_USER@$SSH_HOST" "mkdir -p /srv/dh-game/releases/$release_id"
+          mkdir -p "$RUNNER_TEMP/dh-game-release/deploy"
+          cp -a dist server src package.json package-lock.json "$RUNNER_TEMP/dh-game-release/"
+          cp deploy/activate.sh "$RUNNER_TEMP/dh-game-release/deploy/"
+          rsync -az --delete -e "ssh $ssh_options" \
+            "$RUNNER_TEMP/dh-game-release/" \
+            "$SSH_USER@$SSH_HOST:/srv/dh-game/releases/$release_id/"
+          ssh $ssh_options "$SSH_USER@$SSH_HOST" \
+            "bash /srv/dh-game/releases/$release_id/deploy/activate.sh $release_id"
+
+      - name: Verify public game
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --max-time 15 \
+              https://leedada.duckdns.org/api/health | grep -q '"ok":true' \
+              && curl --fail --silent --show-error --max-time 15 \
+              https://leedada.duckdns.org/ | grep -q 'id="root"'; then
+              echo 'Game and API are available at https://leedada.duckdns.org/'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Public game verification failed' >&2
+          exit 1

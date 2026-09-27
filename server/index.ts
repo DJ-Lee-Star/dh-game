@@ -86,7 +86,7 @@ function staticFile(req: IncomingMessage, res: ServerResponse, pathname: string)
   const file = existsSync(requested) && extname(requested) ? requested : join(dist, 'index.html');
   try {
     const mime: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.png': 'image/png', '.mp3': 'audio/mpeg' };
-    res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
     res.end(readFileSync(file));
   } catch { error(res, 404, '파일을 찾지 못했어요.'); }
 }

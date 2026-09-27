@@ -25,3 +25,96 @@
 @keyframes eater-mother{0%,48%{opacity:0;transform:translateX(-50%) scale(.96)}68%{opacity:1;transform:translateX(-50%) rotate(-4deg)}83%{transform:translateX(-50%) rotate(4deg)}100%{opacity:1;transform:translateX(-50%) rotate(0)}}
 @keyframes eater-father{0%,48%{opacity:0;transform:translateX(-50%) scale(.96)}67%{opacity:1;transform:translateX(-50%) scale(1.07)}83%{transform:translateX(-50%) scale(1)}100%{opacity:1;transform:translateX(-50%) scale(1.03)}}
 @keyframes eater-sibling{0%,48%{opacity:0;transform:translateX(-50%) translateY(0)}65%{opacity:1;transform:translateX(-50%) translateY(-17px)}82%{transform:translateX(-50%) translateY(4px)}100%{opacity:1;transform:translateX(-50%) translateY(-8px)}}
+
+/* The chef works behind the counter; the visitor arrives in front of it. */
+.restaurant-stage{height:238px;margin-top:auto;position:relative;isolation:isolate}
+.restaurant-stage .chef-figure{position:absolute;left:8%;bottom:28px;width:52%;height:216px;z-index:1}
+.restaurant-stage .chef-figure img{height:214px;max-height:214px}
+.restaurant-stage .chef-figure .figure-label{display:none}
+.restaurant-stage .customer-figure{position:absolute;right:0;bottom:0;width:39%;height:180px;z-index:5;animation:guest-arrives .7s ease-out both}
+.restaurant-stage .customer-figure img{height:162px;max-height:162px}
+.restaurant-stage .customer-figure>span{bottom:1px}
+.restaurant-counter{position:absolute;left:-14px;right:30%;height:102px;bottom:0;z-index:3;filter:drop-shadow(0 8px 5px #5f3c2860)}
+.counter-worktop{height:31px;margin:0 -5px;border:3px solid #75472f;border-radius:50% 50% 20% 20%;background:linear-gradient(#f3d3a5 0%,#bc8558 55%,#794b32 100%);box-shadow:inset 0 5px #fff0ca80;position:relative;z-index:2}
+.counter-worktop .food-art{position:absolute;left:43%;bottom:5px;filter:drop-shadow(0 3px 2px #60402a60)}
+.counter-front{height:80px;margin:-7px 3px 0;background:repeating-linear-gradient(90deg,#a86b45 0 24px,#a46a44 24px 26px,#bb8051 26px 49px);border:3px solid #75472f;border-top:0;border-radius:0 0 14px 14px;box-shadow:inset 0 8px 0 #d49c6c,inset 0 -10px 0 #8a5639;color:#fff5dd;text-align:center;padding:34px 0 0;font-size:12px;font-weight:900;text-shadow:0 2px #74432c}
+@keyframes guest-arrives{from{transform:translateX(22px);opacity:.45}to{transform:translateX(0);opacity:1}}
+
+/* A single horizontal market aisle begins at the cashier and keeps the basket visible. */
+.mart-v2{min-height:100%;display:flex;flex-direction:column;background:#fff5e5}
+.mart-title{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:13px 15px 8px}
+.mart-title strong{font-size:19px}.mart-title span{max-width:52%;font-size:10px;line-height:1.3;color:#926f58;text-align:right;font-weight:800}
+.mart-world{height:340px;min-height:340px;gap:0;scroll-snap-type:none;padding:0;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:thin;background:linear-gradient(#eacaaa 0 69%,#bd8860 70%,#ead5b9 100%)}
+.mart-checkout-scene,.mart-bay{flex:0 0 min(100%,360px);height:340px;position:relative;overflow:hidden}
+.mart-checkout-scene{background:linear-gradient(90deg,#d49b67 0 5%,transparent 5% 95%,#d49b67 95%),repeating-linear-gradient(0deg,#f2dfbd 0 19px,#eed4aa 20px 21px)}
+.mart-shop-sign{position:absolute;top:12px;left:12%;right:12%;border-radius:12px;background:#618977;color:#fff7df;text-align:center;padding:8px;font-size:18px;font-weight:900;box-shadow:0 5px 0 #3e685b}
+.mart-shop-sign span{display:block;font-size:9px}
+.mart-checkout-scene>img{position:absolute;width:166px;height:220px;object-fit:contain;left:calc(50% - 83px);bottom:53px;filter:drop-shadow(0 6px 4px #684f3a60)}
+.mart-checkout-scene>img.greeting{animation:shopkeeper-greet .9s ease-in-out both}
+@keyframes shopkeeper-greet{0%{transform:translateY(8px) rotate(-4deg)}55%{transform:translateY(-5px) rotate(4deg)}100%{transform:translateY(0) rotate(0)}}
+.mart-counter-top{position:absolute;z-index:2;left:5%;right:5%;bottom:48px;min-height:41px;border:3px solid #865335;border-radius:14px 14px 3px 3px;background:linear-gradient(#e1b27c,#a56940);display:flex;align-items:center;justify-content:space-around;padding:5px 8px;box-shadow:0 -4px 0 #f4d3a0}
+.mart-counter-top>span{font-size:10px;color:#fffaf0;font-weight:900;text-shadow:0 1px #815437}
+.register{display:flex;align-items:center;gap:3px;background:#e7d6b3;border:2px solid #6a5649;border-radius:5px;padding:4px;font-size:10px;font-weight:900;white-space:nowrap}
+.mart-counter-front{position:absolute;z-index:2;left:7%;right:7%;bottom:0;height:52px;border:3px solid #865335;border-top:0;border-radius:0 0 9px 9px;background:repeating-linear-gradient(90deg,#a36a45 0 25px,#b7784d 25px 50px);color:#fff4df;text-align:center;padding-top:17px;font-size:12px;font-weight:900;text-shadow:0 1px #68452f}
+.mart-direction{position:absolute;right:7px;top:80px;background:#fff5dfd9;border-radius:9px;padding:5px;font-size:10px;font-weight:900;color:#a06243}
+.mart-bay{background:linear-gradient(90deg,#a86c44 0 7px,transparent 7px calc(100% - 7px),#a86c44 calc(100% - 7px)),repeating-linear-gradient(0deg,#c78c55 0 11px,#845332 11px 17px,#efd6ac 17px 158px);border-right:3px solid #8d5837}
+.mart-bay-head{margin:12px 14px 5px;padding:7px;background:#fff0cf;border:2px solid #bb8b58;border-radius:10px;text-align:center;color:#865a3f;font-size:12px;font-weight:900}
+.mart-bay-head span{float:right;color:#b5825d;font-size:10px}
+.mart-bay-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,143px);gap:6px;padding:0 13px}
+.mart-bay .shelf-product{min-width:0;min-height:0;flex:none;padding:3px;gap:1px;border:0;border-radius:9px;background:#fff7e7dc;box-shadow:0 3px 0 #925d38;position:relative}
+.mart-bay .shelf-product.locked{filter:none;background:#e8e2d4}
+.mart-bay .shelf-item-art{width:100%;height:68px;margin:0;background:radial-gradient(#fff9e8,#eacda0);position:relative}
+.mart-bay .shelf-item-art svg{max-width:100%;max-height:62px;filter:drop-shadow(0 3px 2px #795e445e)}
+.product-lock{position:absolute;right:0;top:0;background:#fff7eb;border-radius:50%;font-size:17px;padding:3px}
+.mart-bay .shelf-product strong{font-size:10px;line-height:1.1;text-align:center}
+.mart-bay .shelf-product small{min-height:12px;font-size:9px;color:#815b4a;font-weight:800}
+.mart-bay .shelf-product button{font-size:9px;min-height:25px;padding:3px;background:#cf805e}
+.mart-bay .shelf-product button[data-unavailable=true]{background:#8d8982;color:#fff!important}
+.mart-bay .shelf-product.just-added{animation:product-pick .4s ease-out}
+@keyframes product-pick{50%{transform:translateY(-8px) scale(1.06)}}
+.mart-message{margin:6px 13px;min-height:28px;font-size:11px;color:#8c654b;font-weight:800;text-align:center}
+.mart-cart-dock{position:sticky;bottom:0;margin-top:auto;z-index:3;padding:7px 12px 12px;background:#fff8e9;border-top:3px solid #d9b483;box-shadow:0 -5px 15px #543e2e20}
+.mart-cart-dock .cart-summary{width:100%;margin:0;min-height:48px}
+.mart-cart-dock.cart-bump .cart-summary{box-shadow:0 0 0 3px #e7b96a}
+.mart-cart-dock .cart-detail{margin:6px 0 0;max-height:min(44vh,310px);overflow-y:auto}
+.mart-cart-dock .cart-row>span{display:flex;align-items:center;gap:4px}
+.mart-cart-dock .cart-row svg{flex:none}
+.mart-world{flex:1;height:auto}
+.mart-checkout-scene,.mart-bay{height:100%;min-height:340px}
+@media(max-width:360px){.restaurant-stage{height:209px}.restaurant-stage .chef-figure{height:188px;bottom:24px}.restaurant-stage .chef-figure img{height:186px;max-height:186px}.restaurant-stage .customer-figure{height:158px}.restaurant-stage .customer-figure img{height:144px;max-height:144px}.restaurant-counter{height:91px;right:27%}.counter-front{height:69px;padding-top:26px}.mart-world,.mart-checkout-scene,.mart-bay{height:320px;min-height:320px}.mart-bay-grid{grid-template-rows:repeat(2,134px)}}
+
+/* Cooking starts from the visible ingredient or utensil and only advances over its target. */
+.direct-cook{display:block;height:205px;background:radial-gradient(circle at 50% 48%,#fff9ed,#eed2ad);border-style:solid}
+.direct-cook .cook-scene-art{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(100%,330px);height:194px;opacity:.94}
+.direct-cook .cook-target{position:absolute;transform:translate(-50%,-50%);border:2px dashed #a0674d90;border-radius:46%;display:flex;align-items:flex-start;justify-content:center;pointer-events:none;z-index:1}
+.direct-cook .cook-target span{position:absolute;bottom:-16px;white-space:nowrap;background:#fff9ead9;border-radius:7px;padding:2px 5px;font-size:10px;font-weight:900;color:#8d5f46}
+.direct-cook.show-guide .cook-target{border:3px solid #e88b65;box-shadow:0 0 0 4px #ffebb994}
+.direct-cook .cook-tool{position:absolute;z-index:3;transform:translate(-50%,-50%);width:60px;height:60px;border:2px solid #a8774c!important;border-radius:50%;background:radial-gradient(#fffdf4,#efcf9f);display:grid;place-items:center;padding:2px;touch-action:none;cursor:grab;box-shadow:0 5px 7px #70452f4a}
+.direct-cook .cook-tool:active{cursor:grabbing;box-shadow:0 2px 4px #70452f4a}
+.direct-cook .cook-tool:focus-visible{outline:4px solid #e6826e}
+.direct-cook .cook-tool:disabled{opacity:.45}
+.direct-cook .cook-tool svg{max-width:55px;max-height:55px;pointer-events:none}
+.cook-guide-hand{position:absolute;z-index:4;left:var(--from-x);top:var(--from-y);color:#ce615b;filter:drop-shadow(0 2px 2px #fff);pointer-events:none;animation:cook-demonstrate 2.2s ease-in-out infinite}
+@keyframes cook-demonstrate{0%,15%,100%{left:var(--from-x);top:var(--from-y);opacity:.25}60%,75%{left:var(--to-x);top:var(--to-y);opacity:1}}
+.process-item svg{filter:drop-shadow(0 2px 2px #76533d55)}
+@media(prefers-reduced-motion:reduce){.cook-guide-hand{animation:none;left:var(--to-x);top:var(--to-y);opacity:1}.restaurant-stage .customer-figure{animation:none}}
+@media(prefers-reduced-motion:reduce){.mart-checkout-scene>img.greeting{animation:none}}
+
+.basket-hero{display:grid;place-items:center;height:95px;animation:bob 2s ease-in-out infinite}
+.catch-board{background:radial-gradient(circle at 79% 15%,#fff0bb 0 27px,transparent 29px),linear-gradient(#b7dfe2 0%,#e9e7ba 68%,#9fbe87 69%,#80a876 100%)}
+.catch-board::before{content:"";position:absolute;left:-8%;right:-8%;bottom:2%;height:39%;background:radial-gradient(ellipse at 20% 100%,#759d72 0 45%,transparent 46%),radial-gradient(ellipse at 80% 100%,#90b884 0 43%,transparent 44%);pointer-events:none}
+.catch-board.ending-soon{border-color:#d56f65;animation:ending-pulse 1.5s ease-in-out infinite}
+.catch-basket{width:75px;height:75px;display:grid;place-items:center;z-index:2}
+.falling-food{z-index:2}
+.minigame-warning{margin:0 0 6px;padding:6px 10px;border-radius:10px;background:#ffe7cc;color:#9b4f42;font-size:12px;font-weight:900;text-align:center}
+@keyframes ending-pulse{50%{border-color:#e9ae64;box-shadow:0 0 0 5px #e6a86d55}}
+@media(prefers-reduced-motion:reduce){.catch-board.ending-soon{animation:none;border-width:5px}.basket-hero{animation:none}}
+
+.wardrobe-preview{background-position:center;background-size:cover;box-shadow:inset 0 0 0 3px #fff4df8c}
+.wardrobe-item .wardrobe-item-art{width:94px;height:65px;display:grid;place-items:center;margin:1px auto 4px;overflow:hidden;border-radius:10px;background:radial-gradient(#fff9eb,#f1ddbf)}
+.wardrobe-item-art svg{width:78px;max-height:58px;filter:drop-shadow(0 3px 2px #805f4866)}
+.wardrobe-item-image{max-width:100%;width:82px;height:63px;object-fit:contain;filter:drop-shadow(0 3px 2px #805f4866)}
+.wardrobe-item:has(.wardrobe-item-image[src*="bg-"]) .wardrobe-item-image{width:100%;height:65px;object-fit:cover}
+.door-icon svg{filter:drop-shadow(0 3px 2px #684f4066)}
+.placed-topping{display:grid;place-items:center}
+.food-art{filter:drop-shadow(0 3px 3px #7955394d)}

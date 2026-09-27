@@ -3,8 +3,9 @@ import { mkdirSync, readdirSync } from 'node:fs';
 import { INGREDIENTS, RECIPES, RECIPE_IDS } from '../src/v2/content';
 import type { IngredientId, RecipeId } from '../src/v2/content';
 
-const shots = 'docs/qa-v2';
+const shots = 'docs/qa-v2-followup';
 mkdirSync(shots, { recursive: true });
+const seenCookActions = new Set<string>();
 
 async function newGame(page: Page, name = '테스트냥냥') {
   await page.goto('/');
@@ -13,13 +14,30 @@ async function newGame(page: Page, name = '테스트냥냥') {
   await expect(page.getByText('Lv.1')).toBeVisible();
   await expect(page.locator('.room-heading strong')).toHaveText('몽실이');
 }
-async function gesture(page: Page, horizontal = false) {
-  const pad = page.locator('.gesture-surface');
-  const box = await pad.boundingBox();
-  if (!box) throw new Error('cooking gesture surface missing');
-  const x = box.x + box.width / 2, y = box.y + box.height / 2;
-  await page.mouse.move(x, y); await page.mouse.down();
-  for (let i = 0; i < 8; i++) await page.mouse.move(x + (horizontal ? (i % 2 ? 35 : -35) : 0), y + (horizontal ? 0 : (i % 2 ? 35 : -35)), { steps: 3 });
+async function settleRestaurant(page: Page) {
+  await page.locator('.customer-figure').evaluate(async element => { await Promise.all(element.getAnimations().map(animation => animation.finished)); });
+}
+async function gesture(page: Page) {
+  const toolLocator = page.locator('.cook-tool');
+  await toolLocator.scrollIntoViewIfNeeded();
+  const tool = await toolLocator.boundingBox();
+  const target = await page.locator('.cook-target').boundingBox();
+  const action = (await page.locator('.gesture-surface').getAttribute('class'))?.split(' ').find(name => name.startsWith('gesture-') && name !== 'gesture-surface')?.slice(8);
+  if (!tool || !target || !action) throw new Error('visible cooking tool or target missing');
+  const center = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+  await page.mouse.move(tool.x + tool.width / 2, tool.y + tool.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(center.x, center.y, { steps: 8 });
+  if (action === 'stir') {
+    for (let i = 0; i < 24; i++) {
+      const angle = i / 24 * Math.PI * 4;
+      await page.mouse.move(center.x + Math.cos(angle) * target.width * .25, center.y + Math.sin(angle) * target.height * .25);
+    }
+  } else if (!['crack', 'pour', 'stack'].includes(action)) {
+    for (let i = 0; i < 12; i++) {
+      await page.mouse.move(center.x + (['slice', 'flip'].includes(action) ? 0 : (i % 2 ? 1 : -1) * target.width * .24), center.y + (['slice', 'flip'].includes(action) ? (i % 2 ? 1 : -1) * target.height * .24 : 0), { steps: 2 });
+    }
+  }
   await page.mouse.up();
   await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 100%/);
 }
@@ -29,11 +47,23 @@ async function cookEgg(page: Page) {
   await page.getByRole('button', { name: /냉장고/ }).click();
   await page.locator('.storage-inside button').filter({ hasText: '달걀' }).click();
   await page.locator('.cook-board').screenshot({ path: `${shots}/07-cooking-gesture.png` });
+  const board = page.locator('.gesture-surface');
+  await board.scrollIntoViewIfNeeded();
+  const bounds = await board.boundingBox();
+  if (!bounds) throw new Error('cooking board missing');
+  await page.mouse.move(bounds.x + bounds.width * .88, bounds.y + bounds.height * .8);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height * .7, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 0%/);
+  await page.getByRole('button', { name: '손 모양 시범 보기' }).click();
+  await expect(page.locator('.cook-guide-hand')).toBeVisible();
+  await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 0%/);
   await gesture(page);
   await page.getByRole('button', { name: /다음 조리 단계로/ }).click();
   await page.getByRole('button', { name: /상온 보관장/ }).click();
   await page.locator('.storage-inside button').filter({ hasText: '식용유' }).click();
-  await gesture(page, true);
+  await gesture(page);
   await page.getByRole('button', { name: /접시 꾸미기로/ }).click();
   await page.locator('.plating-plate').click();
   await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
@@ -80,7 +110,11 @@ async function cookRecipeUI(page: Page, recipeId: RecipeId) {
       if (!(await door.evaluate(element => element.classList.contains('opened')))) await door.click();
       await page.locator('.storage-inside button').filter({ hasText: INGREDIENTS[ingredient].name }).first().click();
     }
-    for (let n = 0; n < 4; n++) await page.getByRole('button', { name: /조리가 어려우면 도움받기/ }).click();
+    if (!seenCookActions.has(stage.action)) {
+      await page.locator('.cook-board').screenshot({ path: `${shots}/cook-${stage.action}.png` });
+      seenCookActions.add(stage.action);
+    }
+    await gesture(page);
     await page.getByRole('button', { name: index + 1 < RECIPES[recipeId].stages.length ? /다음 조리 단계로/ : /접시 꾸미기로/ }).click();
   }
   await page.locator('.plating-plate').click();
@@ -91,6 +125,7 @@ async function cookRecipeUI(page: Page, recipeId: RecipeId) {
 test('first play, cooking gestures, serving, persistence and mart cart', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await newGame(page);
+  await settleRestaurant(page);
   await page.screenshot({ path: `${shots}/01-first-play.png`, fullPage: true });
   await cookEgg(page);
   await expect(page.locator('.ready-dish strong')).toHaveText('노릇 달걀 프라이');
@@ -101,20 +136,39 @@ test('first play, cooking gestures, serving, persistence and mart cart', async (
   await page.reload();
   await expect(page.getByText('Lv.2')).toBeVisible();
   await page.getByRole('button', { name: /마트/ }).last().click();
+  await page.locator('.mart-checkout-scene img').evaluate(async image => { await (image as HTMLImageElement).decode(); });
+  await page.screenshot({ path: `${shots}/02-mart-entry.png`, fullPage: true });
   const money = await page.locator('.v2-currency').first().textContent();
+  const cartY = (await page.locator('.cart-summary').boundingBox())?.y;
+  await page.locator('.shelf-product').filter({ hasText: '치즈' }).getByRole('button').click();
+  await expect(page.locator('.mart-message')).toContainText('Lv.3에 열려요');
+  await expect(page.locator('.cart-summary')).toContainText('0개');
+  await page.screenshot({ path: `${shots}/02-mart-locked.png`, fullPage: true });
   await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  expect((await page.locator('.cart-summary').boundingBox())?.y).toBe(cartY);
+  expect(await page.locator('.shelf-scroll').evaluate(node => getComputedStyle(node).scrollSnapType)).toBe('none');
+  await page.screenshot({ path: `${shots}/02-mart-shelf.png`, fullPage: true });
   await expect(page.locator('.v2-currency').first()).toHaveText(money!);
   await page.getByRole('button', { name: /장바구니 1개/ }).click();
+  await page.getByRole('button', { name: /계산대로 돌아가기/ }).click();
   await page.getByRole('button', { name: /계산하고 재료 가져가기/ }).click();
   await expect(page.locator('.shelf-product').filter({ hasText: '식빵' })).toContainText('보관 1개');
   await page.screenshot({ path: `${shots}/02-mart.png`, fullPage: true });
   const shelf = await page.locator('.shelf-scroll').evaluate(node => ({ width: node.scrollWidth, view: node.clientWidth }));
   expect(shelf.width).toBeGreaterThan(shelf.view);
+  for (let i = 0; i < 8; i++) await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  await page.locator('.shelf-product').filter({ hasText: '식빵' }).getByRole('button').click();
+  await expect(page.locator('.mart-message')).toContainText('코인이 부족해요');
+  await expect(page.locator('.cart-summary')).toContainText('8개');
 });
 
 test('minigame pays guaranteed ingredient value, wardrobe and profiles stay separate', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await newGame(page, '첫째 셰프');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: '설정' }).click();
+  await page.getByRole('checkbox', { name: /동작 효과음/ }).uncheck();
+  await page.getByRole('button', { name: '닫기' }).click();
   await page.getByRole('button', { name: /놀이/ }).last().click();
   await page.getByRole('button', { name: /100코인 내고 시작하기/ }).click();
   await page.reload();
@@ -122,6 +176,9 @@ test('minigame pays guaranteed ingredient value, wardrobe and profiles stay sepa
   await expect(page.locator('.catch-board')).toBeVisible();
   await expect(page.getByText(/점수/)).toBeVisible();
   await expect(page.locator('.v2-currency').first()).toContainText('250');
+  await expect(page.locator('.minigame-warning')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.catch-board')).toHaveClass(/ending-soon/);
+  expect(await page.locator('.catch-board').evaluate(element => parseFloat(getComputedStyle(element).animationDuration))).toBeLessThan(.01);
   await expect(page.getByText(/코인어치 재료를 받았어요/)).toBeVisible({ timeout: 18_000 });
   await page.getByRole('button', { name: /꾸미기/ }).last().click();
   await page.getByRole('button', { name: /모자/ }).click();
@@ -187,13 +244,18 @@ test('all Lv.1–5 recipes, secrets, family meals and cooking cancellation work 
   expect((await apiState(page)).heldDish).toBeNull();
   for (const [index, id] of RECIPE_IDS.entries()) {
     await cookRecipeUI(page, id);
+    if (id === 'fried_egg') await settleRestaurant(page);
     if (id === 'fried_egg') await page.screenshot({ path: `${shots}/04-family-choice-before.png`, fullPage: true });
     await page.getByRole('button', { name: '가족에게 대접하기' }).click();
+    if (id === 'fried_egg') {
+      await page.locator('.family-choices img').evaluateAll(async images => { await Promise.all(images.map(image => (image as HTMLImageElement).decode())); });
+      await page.screenshot({ path: `${shots}/04-family-choice.png`, fullPage: true });
+    }
     const family = (['mother', 'father', 'sibling'] as const)[index % 3];
     const familyName = { mother: '엄마', father: '아빠', sibling: '동생' }[family];
     await page.locator('.family-choices button').filter({ hasText: familyName }).click();
     await expect(page.locator(`.eating-stage.eater-${family}`)).toBeVisible();
-    if (id === 'fried_egg') await page.screenshot({ path: `${shots}/05-family-eating.png`, fullPage: true });
+    if (index < 3) await page.screenshot({ path: `${shots}/05-family-${family}-eating.png`, fullPage: true });
     await page.locator('.eating-overlay').click();
   }
   const state = await apiState(page);
@@ -211,6 +273,7 @@ test('all Lv.1–5 recipes, secrets, family meals and cooking cancellation work 
   await expect(page.locator('.chef-accessory')).toBeVisible();
   await expect(page.locator('.restaurant-scene-v2')).toHaveClass(/evening/);
   await expect(page.getByText(/최고 레벨 셰프/)).toBeVisible();
+  await settleRestaurant(page);
   await page.screenshot({ path: `${shots}/09-outfit-background.png`, fullPage: true });
   await page.reload();
   await expect(page.locator('.chef-figure img')).toHaveAttribute('src', '/game/chef-mint-outfit.png');
@@ -262,12 +325,14 @@ test('real touch input moves the mart shelf and minigame basket on a 320px scree
     await page.getByRole('button', { name: /냉장고/ }).tap();
     await page.locator('.storage-inside button').filter({ hasText: '달걀' }).tap();
     const cookPad = page.locator('.gesture-surface');
-    await cookPad.scrollIntoViewIfNeeded();
-    const cookBox = await cookPad.boundingBox();
-    if (!cookBox) throw new Error('touch cooking board missing');
-    const cookX = cookBox.x + cookBox.width / 2, cookY = cookBox.y + 32;
+    const touchTool = cookPad.locator('.cook-tool');
+    await touchTool.scrollIntoViewIfNeeded();
+    const toolBox = await touchTool.boundingBox(), targetBox = await cookPad.locator('.cook-target').boundingBox();
+    if (!toolBox || !targetBox) throw new Error('touch cooking tool or target missing');
+    const cookX = toolBox.x + toolBox.width / 2, cookY = toolBox.y + toolBox.height / 2;
+    const targetX = targetBox.x + targetBox.width / 2, targetY = targetBox.y + targetBox.height / 2;
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cookX, y: cookY }] });
-    for (let i = 1; i <= 6; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: cookX, y: cookY + i * 17 }] });
+    for (let i = 1; i <= 8; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: cookX + (targetX - cookX) * i / 8, y: cookY + (targetY - cookY) * i / 8 }] });
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await expect(cookPad.locator('.cook-scene-art')).toBeVisible();
     const progress = await page.locator('.cook-meter span').getAttribute('style');

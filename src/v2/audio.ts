@@ -2,7 +2,7 @@ export interface AudioSettings { music: boolean; musicVolume: number; effects: b
 const KEY = 'nyang-v2-audio';
 const defaults: AudioSettings = { music: true, musicVolume: 36, effects: true, effectsVolume: 42 };
 type Scene = 'restaurant' | 'mart';
-type Effect = 'tap' | 'slice' | 'stir' | 'catch' | 'cook' | 'serve' | 'reward' | 'error';
+type Effect = 'tap' | 'slice' | 'stir' | 'catch' | 'cook' | 'serve' | 'reward' | 'error' | 'countdown';
 const notes: Record<string, number> = { C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99 };
 const tunes: Record<Scene, (keyof typeof notes | null)[]> = {
   restaurant: ['E4', null, 'G4', 'A4', 'G4', null, 'E4', null, 'D4', null, 'E4', 'G4', 'E4', null, 'C4', null,
@@ -94,6 +94,7 @@ class GameAudio {
       case 'serve': tone('G4', 0, .15); tone('C5', .11, .18); tone('E5', .22, .24); tone('G5', .33, .3); break;
       case 'reward': tone('C5', 0, .12); tone('G5', .1, .22); break;
       case 'error': tone('D4', 0, .13, 'triangle', .5); tone('C4', .1, .2, 'triangle', .4); break;
+      case 'countdown': tone('C5', 0, .1, 'sine', .45); break;
     }
   }
 }
