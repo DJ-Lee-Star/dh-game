@@ -26,3 +26,5 @@
 화면 증거: [280px 첫 조리](qa-play-implementation-20260927/14-first-cook-280.png), [280px 완성 접시](qa-play-implementation-20260927/15-first-plate-280.png), [320px 우유 선택 후](qa-play-implementation-20260927/16-milk-visible-320.png), [320px 우유 붓기 후](qa-play-implementation-20260927/17-milk-poured-320.png).
 
 자동화는 아이가 재미를 느끼는지 판정하지 못한다. 동일한 아이에게 다시 짧게 해 볼 기회를 주고, 첫 주문을 스스로 끝낼 수 있는지와 어느 순간 그만두고 싶은지 관찰해야 한다. 재플레이는 강요하지 않는다.
+
+이후 첫 조작과 보상 흐름을 다시 설계했다. 현재 첫 주문 화면은 [첫 1분 플레이 재설계와 검수](FIRST_MINUTE_REWORK_QA.md)를 본다.

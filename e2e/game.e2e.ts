@@ -154,7 +154,7 @@ test('first play, cooking gestures, serving, persistence and mart cart', async (
   await page.getByRole('button', { name: /손님에게 서빙하기/ }).click();
   await expect(page.locator('.eating-stage')).toBeVisible();
   await expect(page.locator('.eating-stage .eating-dish')).toBeVisible();
-  await page.getByRole('button', { name: '계속하기' }).click();
+  await page.getByRole('button', { name: /다음 손님 만나기/ }).click();
   await page.locator('.eating-overlay').waitFor({ state: 'hidden' });
   await page.reload();
   await expect(page.getByText('Lv.2')).toBeVisible();
@@ -609,11 +609,12 @@ test('recipe pages fit small screens, album remakes a saved plate, and practice 
 test('family request changes the restaurant and ingredient sorting is a distinct free game', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await newGame(page, '가족과 놀이');
+  await expect(page.locator('.family-request-progress')).toBeHidden();
+  await apiCommand(page, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'heart', decorations: [{ kind: 'shape', id: 'heart', x: 53, y: 30 }] });
+  await page.reload();
   await page.getByRole('button', { name: /가족의 부탁/ }).click();
   await expect(page.locator('.family-request-list')).toContainText('마음 담은 프라이');
   await page.getByRole('button', { name: '닫기' }).click();
-  await apiCommand(page, { type: 'COOK', recipeId: 'fried_egg', topping: 'none', shape: 'heart', decorations: [{ kind: 'shape', id: 'heart', x: 53, y: 30 }] });
-  await page.reload();
   await page.getByRole('button', { name: '가족에게 대접하기' }).click();
   await expect(page.locator('.family-choices button').filter({ hasText: '아빠' })).toContainText('부탁한 접시예요');
   await page.locator('.family-choices button').filter({ hasText: '아빠' }).click();

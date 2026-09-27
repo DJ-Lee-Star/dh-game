@@ -40,16 +40,16 @@ function ToolArt({ action, ingredient, recipeId }: { action: CookAction; ingredi
   </svg>;
 }
 
-export function CookingInteraction({ action, progress, setProgress, ingredient, recipeId, ready, help }: {
+export function CookingInteraction({ action, progress, setProgress, ingredient, recipeId, ready, help, guided = false }: {
   action: CookAction; progress: number; setProgress: Dispatch<SetStateAction<number>>;
-  ingredient?: IngredientId; recipeId: RecipeId; ready: boolean; help: boolean;
+  ingredient?: IngredientId; recipeId: RecipeId; ready: boolean; help: boolean; guided?: boolean;
 }) {
   const setup = SETUP[action];
   const surface = useRef<HTMLDivElement>(null);
   const drag = useRef<{ last: Point; start: Point; angle: number; inside: boolean; moved: boolean } | null>(null);
   const [position, setPosition] = useState<Point>(setup.source);
   const targetRadius = help ? { x: setup.radius.x * 1.28, y: setup.radius.y * 1.28 } : setup.radius;
-  const tapAmount = ['crack', 'pour', 'stack'].includes(action) ? 100 : 50;
+  const tapAmount = guided || ['crack', 'pour', 'stack'].includes(action) ? 100 : 50;
   const inside = (point: Point) => Math.abs(point.x - setup.target.x) <= targetRadius.x && Math.abs(point.y - setup.target.y) <= targetRadius.y;
   const location = (event: PointerEvent<HTMLButtonElement>): Point => {
     const rect = surface.current!.getBoundingClientRect();
@@ -95,10 +95,10 @@ export function CookingInteraction({ action, progress, setProgress, ingredient, 
     drag.current = null;
     setPosition(setup.source);
   };
-  return <div className={`gesture-surface direct-cook gesture-${action} ${ready ? 'ready' : ''} ${help ? 'show-guide' : ''}`} ref={surface} aria-label={`${setup.tool}을(를) 잡아 ${setup.goal}(으)로 움직이는 조리 화면`}>
+  return <div className={`gesture-surface direct-cook gesture-${action} ${ready ? 'ready' : ''} ${help ? 'show-guide' : ''} ${guided ? 'guided-gesture' : ''}`} ref={surface} aria-label={`${setup.tool}을(를) 잡아 ${setup.goal}(으)로 움직이는 조리 화면`}>
     <CookScene action={action} progress={progress} ingredient={ingredient} recipeId={recipeId}/>
     <div className="cook-target" style={{ left: `${setup.target.x}%`, top: `${setup.target.y}%`, width: `${targetRadius.x * 2}%`, height: `${targetRadius.y * 2}%` }} aria-hidden="true"><span>{setup.goal}</span></div>
     {help && <div className="cook-guide-hand" style={{ '--from-x': `${setup.source.x}%`, '--from-y': `${setup.source.y}%`, '--to-x': `${setup.target.x}%`, '--to-y': `${setup.target.y}%` } as CSSProperties} aria-hidden="true"><Pointer size={30}/></div>}
-    <button type="button" className="cook-tool" disabled={!ready || progress >= 100} style={{ left: `${position.x}%`, top: `${position.y}%` }} onPointerDown={onDown} onPointerMove={event => { if (drag.current) move(location(event)); }} onPointerUp={onUp} onPointerCancel={() => { drag.current = null; setPosition(setup.source); }} onKeyDown={onKey} aria-label={`${setup.tool} 누르거나 잡기`}><ToolArt action={action} ingredient={ingredient} recipeId={recipeId}/></button>
+    <button type="button" className="cook-tool" disabled={!ready || progress >= 100} style={{ left: `${position.x}%`, top: `${position.y}%` }} onPointerDown={onDown} onPointerMove={event => { if (drag.current) move(location(event)); }} onPointerUp={onUp} onPointerCancel={() => { drag.current = null; setPosition(setup.source); }} onKeyDown={onKey} aria-label={guided ? `${setup.tool} 눌러 조리하기` : `${setup.tool} 누르거나 잡기`}><ToolArt action={action} ingredient={ingredient} recipeId={recipeId}/></button>
   </div>;
 }

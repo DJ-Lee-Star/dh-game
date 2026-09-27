@@ -340,3 +340,42 @@
 @media(prefers-reduced-motion:reduce){.eating-dish,.eating-stage .eater-before,.eating-stage .eater-after,.eating-dish .dish-bite,.bite-spark{animation:none}.eating-dish{transform:translate(77px,4px) scale(.76)}.eating-stage .eater-before{opacity:0}.eating-stage .eater-after{opacity:1}.eating-dish .dish-bite{opacity:1}}
 @media(max-width:319px){.v2-hud{padding-left:5px;padding-right:5px}.v2-brand{gap:3px}.brand-paw{font-size:20px;padding:3px}.v2-brand strong{font-size:15px}.v2-brand small,.v2-status small{display:none}.hud-mini-actions{gap:2px}.hud-mini-actions button{width:31px;height:31px}.hud-mini-actions svg{width:16px;height:16px}.v2-status{gap:4px}.v2-currency{font-size:10px;gap:1px}.v2-currency svg{width:12px;height:12px}.v2-nav button{min-height:48px;font-size:10px}.kitchen-play .storage-door strong{font-size:9px}.quick-ingredient{font-size:12px}.story-progress{gap:3px}.story-progress strong{white-space:normal;text-align:right}}
 @media(max-width:359px){.plating-v2 .choice-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:3px;min-height:0;margin:2px 0}.plating-v2 .choice-row strong{grid-column:1/-1;width:auto;min-width:0;line-height:1}.plating-v2 .choice-row button{min-width:0;min-height:32px;padding:3px 1px;font-size:9px;white-space:normal;line-height:1.05}}
+@media(max-height:650px){.plating-v2 .back-text{min-height:25px}.plating-v2 .v2-section-title p{font-size:10px;line-height:1.1}}
+
+/* The first order is a short, visible play sequence with one action at a time. */
+.first-visit .restaurant-v2{height:100%;min-height:0}
+.first-visit .restaurant-scene-v2{min-height:0;flex:1;padding:9px 11px 0}
+.first-visit .order-note{margin-top:5px;padding:5px 8px}
+.first-visit .order-note .food-art{width:54px!important;height:54px!important}
+.first-visit .order-note strong{font-size:15px}.first-visit .order-note span small{font-size:10px}
+.first-visit .restaurant-stage{height:clamp(137px,29dvh,205px);flex:none}
+.first-visit .restaurant-stage .chef-figure{height:95%;bottom:16px}.first-visit .restaurant-stage .chef-figure img{height:100%;max-height:100%}
+.first-visit .restaurant-stage .customer-figure{height:89%}.first-visit .restaurant-stage .customer-figure img{height:100%;max-height:100%}
+.first-visit .restaurant-counter{height:78px}.first-visit .counter-front{height:58px;padding-top:18px}
+.first-visit .restaurant-actions-v2{flex:none;padding:8px 13px 12px}
+.first-visit:has(.restaurant-v2) .hud-mini-actions button:not(:last-child),.first-visit .story-progress{display:none}
+.first-visit .restaurant-actions-v2 .friendly-line{font-size:15px;color:#704a3e;line-height:1.35;margin:2px 0 12px}
+.first-visit .restaurant-actions-v2 .big-primary{min-height:62px;font-size:18px;animation:first-invite 2.2s ease-in-out infinite}
+@keyframes first-invite{50%{box-shadow:0 5px 0 #ae4556,0 0 0 5px #e96b7933}}
+.guided-first-cook .storage-area,.guided-first-cook .kitchen-hint,.guided-first-cook>.subtle-link,.guided-first-cook .stage-required,.guided-first-cook .easy-cook,.guided-first-cook .cook-meter{display:none}
+.guided-first-cook .cook-heading{min-height:62px}.guided-first-cook .cook-heading strong{font-size:17px}.guided-first-cook .cook-heading small{font-weight:900;color:#c05764}
+.guided-first-cook .cook-board{margin:8px;padding:8px;position:relative}
+.guided-first-cook .gesture-instruction{font-size:15px;color:#9d4a4d;min-height:25px;margin:4px 0 8px}
+.guided-first-cook .direct-cook{border-width:3px}
+.guided-gesture .cook-tool:not(:disabled){box-shadow:0 0 0 6px #fff7e2,0 0 0 13px #e46e69a8,0 8px 14px #613f3099}
+.guided-gesture .cook-tool:not(:disabled)::before{content:'';position:absolute;inset:-18px;border:4px solid #df6870;border-radius:50%;pointer-events:none;animation:first-tool-pulse 1.15s ease-in-out infinite}
+.guided-gesture .cook-tool:not(:disabled)::after{content:'여기 눌러!';position:absolute;left:48px;top:41px;width:72px;background:#e65f70;color:white;border-radius:12px;padding:5px 7px;font-size:12px;font-weight:900;box-shadow:0 3px 6px #69443066;pointer-events:none}
+@keyframes first-tool-pulse{50%{transform:scale(1.13);opacity:.35}}
+.first-cook-reaction{position:absolute;z-index:5;left:50%;top:49%;transform:translate(-50%,-50%);min-width:190px;text-align:center;background:#fff9dfeb;border:3px solid #f6c269;border-radius:20px;padding:14px 18px;color:#a45243;font-size:19px;font-weight:950;box-shadow:0 9px 24px #68422866;pointer-events:none;animation:first-reaction .7s ease-out both}
+@keyframes first-reaction{from{opacity:0;scale:.7}to{opacity:1;scale:1}}
+.first-plate{height:100%;min-height:0;padding:8px 12px 12px;display:flex;flex-direction:column;gap:9px;background:linear-gradient(#fff9ee,#f8e6d1)}
+.first-plate-heading{text-align:center;flex:none}.first-plate-heading span{display:block;color:#c6586b;font-weight:900;font-size:14px}.first-plate-heading h2{margin:3px 0;font-size:23px}
+.first-plate-preview{flex:1;min-height:0;display:grid;place-items:center;border:3px solid #efd1ad;border-radius:21px;background:linear-gradient(#fff9ef7f,#fff6e899),url('/game/bg-kitchen.webp') center 72%/cover;box-shadow:inset 0 0 0 4px #fffaf0a8}
+.first-plate-preview .food-art{width:min(70vw,210px)!important;height:min(70vw,210px)!important;filter:drop-shadow(0 10px 8px #684c3777)}
+.first-plate-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:none}.first-plate-colors button{height:54px;background:#fffdf6;border:3px solid #e5d2b9;border-radius:14px;display:flex;justify-content:center;align-items:center;gap:5px;font-size:14px;font-weight:900}.first-plate-colors button.chosen{border-color:#d65b70;background:#fff0ed;box-shadow:0 3px 0 #d79a9b}.plate-swatch{width:23px;height:23px;border-radius:50%;border:2px solid #a78070;box-shadow:inset 0 2px 3px #fff9}.plate-swatch.rose{background:#efa7ad}.plate-swatch.cream{background:#f6e6c4}.plate-swatch.mint{background:#a9d7c7}
+.first-plate>.big-primary{width:100%;min-height:56px;margin:0;flex:none;font-size:17px}
+.first-service-prize{display:flex;align-items:center;justify-content:center;gap:9px;margin:9px 0;padding:5px 12px;border:3px solid #e9b85f;border-radius:15px;background:linear-gradient(110deg,#fff8d9,#ffe9b8);box-shadow:0 4px 0 #d4a65b;text-align:left}
+.first-service-prize img{width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 2px 3px #86502f66)}
+.first-service-prize small{margin:0!important;color:#9c7045!important;font-size:10px}.first-service-prize b{display:block;color:#8e543e;font-size:13px}
+.album-prize{margin-bottom:15px}
+@media(prefers-reduced-motion:reduce){.first-visit .restaurant-actions-v2 .big-primary,.guided-gesture .cook-tool:not(:disabled)::before,.first-cook-reaction{animation:none}}

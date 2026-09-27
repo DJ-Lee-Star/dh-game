@@ -41,33 +41,46 @@ test('audit narrow cooking and milk visibility', async ({ page }) => {
   await page.screenshot({ path: 'test-results/phone-audit-milk-poured.png' });
 });
 
-test('a new chef can finish the first order by tapping the obvious actions', async ({ page }) => {
+test('a new chef sees one action at a time and serves the first order', async ({ page }) => {
   await page.setViewportSize({ width: 280, height: 568 });
   await page.goto('/');
   await page.getByLabel('새 셰프 이름').fill('첫 요리 검수');
   await page.getByRole('button', { name: '새로 시작' }).click();
   await expect(page.getByText('Lv.1')).toBeVisible();
-  await page.getByRole('button', { name: '첫 주문 바로 만들기' }).click();
-  await expect(page.locator('.cook-heading')).toContainText('노릇 달걀 프라이');
+  for (const [width, height] of [[280, 568], [320, 568], [390, 844], [430, 932]]) {
+    await page.setViewportSize({ width, height });
+    const firstAction = await page.evaluate(() => ({ bottom: document.querySelector('.restaurant-actions-v2 .big-primary')!.getBoundingClientRect().bottom, navTop: document.querySelector('.v2-nav')!.getBoundingClientRect().top, noteBottom: document.querySelector('.order-note')!.getBoundingClientRect().bottom, stageTop: document.querySelector('.restaurant-stage')!.getBoundingClientRect().top }));
+    expect(firstAction.bottom, `${width}×${height} start button`).toBeLessThanOrEqual(firstAction.navTop);
+    expect(firstAction.noteBottom, `${width}×${height} order card`).toBeLessThanOrEqual(firstAction.stageTop);
+  }
+  await page.setViewportSize({ width: 280, height: 568 });
+  await page.screenshot({ path: 'test-results/phone-first-invite-280.png' });
+  await page.getByRole('button', { name: '노릇 달걀 프라이 만들기' }).click();
+  await expect(page.locator('.cook-heading')).toContainText('달걀을 톡 깨 볼까요?');
   await expect(page.locator('.recipe-card-v2')).toHaveCount(0);
+  await expect(page.locator('.guided-first-cook')).toBeVisible();
+  await expect(page.locator('.storage-area')).toBeHidden();
   await page.screenshot({ path: 'test-results/phone-first-cook-280.png' });
-  await page.getByRole('button', { name: /달걀 넣기/ }).click();
   await page.locator('.cook-tool').click();
-  await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 100%/);
-  await page.getByRole('button', { name: /다음 조리 단계로/ }).click();
-  await page.getByRole('button', { name: /식용유 넣기/ }).click();
+  await expect(page.locator('.cook-heading')).toContainText('불을 켜서 노릇하게 구워요!');
   await page.locator('.cook-tool').click();
-  await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 50%/);
-  await page.locator('.cook-tool').click();
-  await page.getByRole('button', { name: /접시 꾸미기로/ }).click();
-  const plateLayout = await page.evaluate(() => ({ navTop: document.querySelector('.v2-nav')!.getBoundingClientRect().top, finishBottom: document.querySelector('.plating-v2>.big-primary')!.getBoundingClientRect().bottom, choices: [...document.querySelectorAll('.plating-v2 .choice-row button')].map(item => item.getBoundingClientRect().right) }));
+  await expect(page.locator('.first-plate')).toBeVisible();
+  await page.getByRole('button', { name: '민트' }).click();
+  await expect(page.getByRole('button', { name: '민트' })).toHaveAttribute('aria-pressed', 'true');
+  const plateLayout = await page.evaluate(() => ({ navTop: document.querySelector('.v2-nav')!.getBoundingClientRect().top, finishBottom: document.querySelector('.first-plate>.big-primary')!.getBoundingClientRect().bottom, choices: [...document.querySelectorAll('.first-plate-colors button')].map(item => item.getBoundingClientRect().right) }));
   expect(plateLayout.finishBottom).toBeLessThanOrEqual(plateLayout.navTop);
   expect(plateLayout.choices.every(right => right <= 280)).toBe(true);
   await page.screenshot({ path: 'test-results/phone-first-plate-280.png' });
-  await page.getByRole('button', { name: /이 접시로 완성하기/ }).click();
+  await page.getByRole('button', { name: /완성! 손님에게 가기/ }).click();
   await expect(page.locator('.ready-dish strong')).toHaveText('노릇 달걀 프라이');
   await page.getByRole('button', { name: /손님에게 서빙하기/ }).click();
   await expect(page.locator('.eating-stage')).toBeVisible();
+  await expect(page.locator('.eating-caption')).toHaveText('첫 손님 성공! 🎉');
+  await expect(page.locator('.first-service-prize')).toContainText('첫 손님 스티커 획득!');
+  await page.screenshot({ path: 'test-results/phone-first-prize-280.png' });
+  await page.getByRole('button', { name: '다음 손님 만나기' }).click();
+  await page.getByRole('button', { name: '접시 앨범' }).click();
+  await expect(page.locator('.album-prize')).toContainText('몽실이 스티커');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(280);
 });
 
@@ -79,10 +92,11 @@ test('first order also works with phone touch input', async ({ browser }) => {
     await page.getByLabel('새 셰프 이름').fill('손가락 검수');
     await page.getByRole('button', { name: '새로 시작' }).tap();
     await expect(page.getByText('Lv.1')).toBeVisible();
-    await page.getByRole('button', { name: '첫 주문 바로 만들기' }).tap();
-    await page.getByRole('button', { name: /달걀 넣기/ }).tap();
+    await page.getByRole('button', { name: '노릇 달걀 프라이 만들기' }).tap();
     await page.locator('.cook-tool').tap();
-    await expect(page.locator('.cook-meter span')).toHaveAttribute('style', /width: 100%/);
+    await expect(page.locator('.cook-heading')).toContainText('불을 켜서 노릇하게 구워요!');
+    await page.locator('.cook-tool').tap();
+    await expect(page.locator('.first-plate')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   } finally { await context.close(); }
 });
